@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Automechanika 2025">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23667eea' width='100' height='100'/><text y='70' x='50' text-anchor='middle' font-size='60' fill='white'>🏭</text></svg>">
+    <title>Automechanika Shanghai 2025 - Lizarte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: 80px;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .backup-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .save-indicator.saving { background: #f59e0b; }
+        .save-indicator.saved { background: #10b981; }
+        .save-indicator.error { background: #ef4444; }
+        
+        .save-indicator .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 110px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            background: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .exhibitor-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .exhibitor-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        .exhibitor-card.visited {
+            background: #f0fdf4;
+            border-color: #10b981;
+        }
+        
+        .exhibitor-card.not-interested {
+            background: #fef2f2;
+            border-color: #ef4444;
+            opacity: 0.6;
+        }
+        
+        .exhibitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .exhibitor-info {
+            flex: 1;
+        }
+        
+        .exhibitor-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .exhibitor-location {
+            font-size: 13px;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .priority-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .priority-critical { background: #fee2e2; color: #991b1b; }
+        .priority-high { background: #fed7aa; color: #9a3412; }
+        .priority-medium { background: #fef3c7; color: #92400e; }
+        .priority-low { background: #dbeafe; color: #1e40af; }
+        
+        .visit-options {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .visit-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .visit-btn.active-visited {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+        
+        .visit-btn.active-not-interested {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        
+        .details-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f7fafc;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .rating {
+            display: flex;
+            gap: 5px;
+            font-size: 24px;
+        }
+        
+        .rating span {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .rating span:hover {
+            transform: scale(1.2);
+        }
+        
+        .photo-upload {
+            margin-top: 10px;
+        }
+        
+        .photo-upload input[type="file"] {
+            display: none;
+        }
+        
+        .photo-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .photo-upload-btn:hover {
+            background: #5568d3;
+        }
+        
+        .photo-preview {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .photo-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+        }
+        
+        .action-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            z-index: 999;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-tertiary {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .company-form {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .company-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .company-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+        }
+        
+        .company-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .company-details {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        .company-details strong {
+            color: #2d3748;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .route-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .route-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .route-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .route-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .route-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f7fafc;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .route-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="save-indicator" id="saveIndicator">
+        <div class="spinner"></div>
+        <span id="saveText">Cargando...</span>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🏭 Automechanika Shanghai 2025</h1>
+            <p>Lizarte - Gestión Completa de Visitas</p>
+            <div class="backup-status" id="backupStatus">Último backup: --:--</div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Resumen</button>
+            <button class="tab" onclick="switchTab('confirmed')">✅ Confirmados</button>
+            <button class="tab" onclick="switchTab('pending')">⏳ Pendientes</button>
+            <button class="tab" onclick="switchTab('route')">🗺️ Ruta</button>
+            <button class="tab" onclick="switchTab('companies')">🏢 A Visitar</button>
+            <button class="tab" onclick="switchTab('export')">📤 Exportar</button>
+        </div>
+        
+        <!-- RESUMEN -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number" id="totalVisited">0</div>
+                    <div class="label">Visitados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="totalPending">85</div>
+                    <div class="label">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="progressPercent">0%</div>
+                    <div class="label">Completado</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="companiesCount">0</div>
+                    <div class="label">Empresas Extra</div>
+                </div>
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #2d3748;">📈 Progreso Detallado</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <strong>Ruta Confirmada:</strong> <span id="confirmedProgress">0/43</span>
+                    <div style="background: #e2e8f0; height: 10px; border-radius: 10px; margin-top: 5px; overflow: hidden;">
+                        <div id="confirmedBar" style="background: #10b981; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>Ruta Pendiente:</strong> <span id="pendingProgress">0/42</span>
+                    <div style="background: #e2e8f0; height: 10px; border-radius: 10px; margin-top: 5px; overflow: hidden;">
+                        <div id="pendingBar" style="background: #f59e0b; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+                <div>
+                    <strong>No Interesados:</strong> <span id="notInterestedCount">0</span>
+                    <div style="background: #e2e8f0; height: 10px; border-radius: 10px; margin-top: 5px; overflow: hidden;">
+                        <div id="notInterestedBar" style="background: #ef4444; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #2d3748;">🎯 Por Prioridad</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 12px;">
+                <div style="margin-bottom: 10px;">🔴 <strong>Crítica:</strong> <span id="criticalStats">0/0</span></div>
+                <div style="margin-bottom: 10px;">🟠 <strong>Alta:</strong> <span id="highStats">0/0</span></div>
+                <div style="margin-bottom: 10px;">🟡 <strong>Media:</strong> <span id="mediumStats">0/0</span></div>
+                <div>🟢 <strong>Baja:</strong> <span id="lowStats">0/0</span></div>
+            </div>
+        </div>
+        
+        <!-- CONFIRMADOS -->
+        <div id="confirmed" class="tab-content">
+            <input type="text" class="search-box" placeholder="🔍 Buscar expositor..." oninput="filterExhibitors('confirmed', this.value)">
+            
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all" onclick="applyFilter('confirmed', 'all')">Todos</button>
+                <button class="filter-btn" data-filter="critical" onclick="applyFilter('confirmed', 'critical')">🔴 Crítica</button>
+                <button class="filter-btn" data-filter="high" onclick="applyFilter('confirmed', 'high')">🟠 Alta</button>
+                <button class="filter-btn" data-filter="medium" onclick="applyFilter('confirmed', 'medium')">🟡 Media</button>
+                <button class="filter-btn" data-filter="low" onclick="applyFilter('confirmed', 'low')">🟢 Baja</button>
+                <button class="filter-btn" data-filter="visited" onclick="applyFilter('confirmed', 'visited')">✅ Visitados</button>
+                <button class="filter-btn" data-filter="pending" onclick="applyFilter('confirmed', 'pending')">⏳ Pendientes</button>
+            </div>
+            
+            <div id="confirmedList"></div>
+        </div>
+        
+        <!-- PENDIENTES -->
+        <div id="pending" class="tab-content">
+            <input type="text" class="search-box" placeholder="🔍 Buscar expositor..." oninput="filterExhibitors('pending', this.value)">
+            
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all" onclick="applyFilter('pending', 'all')">Todos</button>
+                <button class="filter-btn" data-filter="critical" onclick="applyFilter('pending', 'critical')">🔴 Crítica</button>
+                <button class="filter-btn" data-filter="high" onclick="applyFilter('pending', 'high')">🟠 Alta</button>
+                <button class="filter-btn" data-filter="medium" onclick="applyFilter('pending', 'medium')">🟡 Media</button>
+                <button class="filter-btn" data-filter="low" onclick="applyFilter('pending', 'low')">🟢 Baja</button>
+                <button class="filter-btn" data-filter="visited" onclick="applyFilter('pending', 'visited')">✅ Visitados</button>
+                <button class="filter-btn" data-filter="pending" onclick="applyFilter('pending', 'pending')">⏳ Pendientes</button>
+            </div>
+            
+            <div id="pendingList"></div>
+        </div>
+        
+        <!-- RUTA OPTIMIZADA -->
+        <div id="route" class="tab-content">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">🗺️ Ruta Optimizada (Mixta: Prioridad + Proximidad)</h3>
+            <p style="color: #718096; margin-bottom: 20px; font-size: 14px;">
+                Ruta optimizada por prioridad crítica/alta primero, luego agrupada por halls cercanos para minimizar desplazamientos.
+            </p>
+            <div id="routeList"></div>
+        </div>
+        
+        <!-- EMPRESAS A VISITAR -->
+        <div id="companies" class="tab-content">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">➕ Añadir Nueva Empresa</h3>
+            <div class="company-form">
+                <div class="form-group">
+                    <label>Nombre de la Empresa *</label>
+                    <input type="text" id="companyName" placeholder="Ej: Tech Motors Ltd">
+                </div>
+                <div class="form-group">
+                    <label>Persona de Contacto *</label>
+                    <input type="text" id="contactPerson" placeholder="Ej: Zhang Wei">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="contactEmail" placeholder="zhang@techmotors.com">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="contactPhone" placeholder="+86 138 0000 0000">
+                </div>
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input type="text" id="contactPosition" placeholder="Ej: Sales Manager">
+                </div>
+                <div class="form-group">
+                    <label>Comentarios</label>
+                    <textarea id="companyComments" rows="3" placeholder="Notas sobre la empresa..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="addCompany()" style="width: 100%;">
+                    ➕ Añadir Empresa
+                </button>
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #2d3748;">📋 Lista de Empresas (<span id="companiesTotal">0</span>)</h3>
+            <div id="companiesList" class="company-list"></div>
+        </div>
+        
+        <!-- EXPORTAR -->
+        <div id="export" class="tab-content">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">📊 Exportar Informes</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                <p style="margin-bottom: 15px; color: #4b5563;"><strong>Word Diario</strong> - Resumen ligero para compartir con el equipo</p>
+                <button class="btn btn-secondary" onclick="exportDailyWord()" style="width: 100%; margin-bottom: 10px;">
+                    📄 Exportar Informe Diario (Word)
+                </button>
+                
+                <p style="margin: 20px 0 15px 0; color: #4b5563;"><strong>Word Completo</strong> - Informe final detallado con fotos</p>
+                <button class="btn btn-secondary" onclick="exportCompleteWord()" style="width: 100%;">
+                    📑 Exportar Informe Completo (Word)
+                </button>
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #2d3748;">💾 Gestión de Datos</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                <p style="margin-bottom: 15px; color: #4b5563;"><strong>JSON</strong> - Para cargar datos en PC o hacer backup</p>
+                <button class="btn btn-primary" onclick="exportToJSON()" style="width: 100%; margin-bottom: 10px;">
+                    📦 Exportar Datos (JSON)
+                </button>
+                <button class="btn btn-tertiary" onclick="createManualBackup()" style="width: 100%;">
+                    💾 Crear Backup Manual
+                </button>
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #2d3748;">📥 Importar Datos</h3>
+            <div style="background: #fef3c7; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                <p style="margin-bottom: 15px; color: #92400e;"><strong>⚠️ Importante:</strong> Al importar se sobrescribirán todos los datos actuales.</p>
+                <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px;">
+                <button class="btn btn-tertiary" onclick="importFromJSON()" style="width: 100%;">
+                    📥 Importar desde JSON
+                </button>
+            </div>
+            
+            <h3 style="margin: 25px 0 15px 0; color: #2d3748;">🔄 Historial de Backups</h3>
+            <div id="backupHistory" style="background: #f7fafc; padding: 20px; border-radius: 12px;"></div>
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="saveManually()">
+            💾 Guardar
+        </button>
+        <button class="btn btn-secondary" onclick="exportToJSON()">
+            📦 JSON
+        </button>
+        <button class="btn btn-tertiary" onclick="exportDailyWord()">
+            📄 Diario
+        </button>
+    </div>
+    
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <img id="modalImage" style="width: 100%; border-radius: 8px;">
+            <button class="btn btn-primary" onclick="closeModal()" style="margin-top: 15px; width: 100%;">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.0/docx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <script>
+        // Base de datos de expositores
+        const exhibitorsData = {
+            confirmed: [
+                { name: "ATC INTERNATIONAL CO., LTD", location: "Hall 3, 3C62", priority: "critical", hall: "3" },
+                { name: "ZHEJIANG UNION AUTO PARTS CO., LTD.", location: "Hall 3, 3CA33", priority: "critical", hall: "3" },
+                { name: "JINZHOU WANYOU MACHINERY CO., LTD.", location: "Hall 3, 3HA08", priority: "critical", hall: "3" },
+                { name: "FUZHOU MAIXIN ELECTRONIC TECHNOLOGY CO., LTD.", location: "Hall 4.1, 4.1QA02", priority: "high", hall: "4.1" },
+                { name: "SICHUAN CHUANHUAN TECHNOLOGY CO., LTD.", location: "Hall 4.1, 4.1HA01", priority: "high", hall: "4.1" },
+                { name: "CHONGQING KUTE MACHINERY CO.,LTD", location: "Hall 4.1, 4.1J17", priority: "high", hall: "4.1" },
+                { name: "CHINA AUTOMOTIVE SYSTEMS, INC.", location: "Hall 4.1, 4.1E01", priority: "high", hall: "4.1" },
+                { name: "HENGTE ELECTRON CONTROL TECHNOLOGY (HUBEI) CO., LTD.", location: "Hall 4.1, 4.1D26", priority: "high", hall: "4.1" },
+                { name: "HUBEI HENGLONG AUTOMOTIVE SYSTEM GROUP CO., LTD.", location: "Hall 4.1, 4.1D36", priority: "high", hall: "4.1" },
+                { name: "HUBEI XINGRUI AUTOMOTIVE PARTS CO.,LTD", location: "Hall 4.1, 4.1D38", priority: "medium", hall: "4.1" },
+                { name: "HUBEI BAFANG AUTOMOTIVE CHASSIS SYSTEM CO.,LTD", location: "Hall 4.1, 4.1DA02", priority: "medium", hall: "4.1" },
+                { name: "XIANNING KEYANG DRIVE SHAFT CO., LTD.", location: "Hall 4.1, 4.1D27", priority: "medium", hall: "4.1" },
+                { name: "HUBEI ZHONGDING SEALING PARTS CO., LTD.", location: "Hall 4.1, 4.1D31", priority: "medium", hall: "4.1" },
+                { name: "HUBEI DIKA AUTOMOTIVE SYSTEM CO., LTD.", location: "Hall 4.1, 4.1D35", priority: "medium", hall: "4.1" },
+                { name: "ZHEJIANG SHIBAO CO.,LTD", location: "Hall 5.1, 5.1A11", priority: "critical", hall: "5.1" },
+                { name: "NINGBO HENGTAI AUTOPARTS CO., LTD.", location: "Hall 5.1, 5.1H39", priority: "high", hall: "5.1" },
+                { name: "ZHEJIANG TONY ELECTRONIC CO.,LTD", location: "Hall 5.1, 5.1H37", priority: "high", hall: "5.1" },
+                { name: "NINGBO TUOPU GROUP CO.,LTD.", location: "Hall 5.1, 5.1A01", priority: "high", hall: "5.1" },
+                { name: "ZHEJIANG WANLIYANG TRANSMISSION CO., LTD.", location: "Hall 5.1, 5.1B01", priority: "high", hall: "5.1" },
+                { name: "TAIZHOU CRRC GUORUI TECHNOLOGY CO., LTD.", location: "Hall 5.1, 5.1B25", priority: "medium", hall: "5.1" },
+                { name: "ZHEJIANG YONGDING MACHINERY TECHNOLOGY CO., LTD.", location: "Hall 5.1, 5.1B28", priority: "medium", hall: "5.1" },
+                { name: "ZHEJIANG WOLFF AUTO PARTS CO.,LTD.", location: "Hall 5.1, 5.1B29", priority: "medium", hall: "5.1" },
+                { name: "ZHEJIANG DADONG INDUSTRY CO.,LTD", location: "Hall 5.1, 5.1H31", priority: "low", hall: "5.1" },
+                { name: "GUANGDONG HONGTU TECHNOLOGY (HOLDINGS) CO., LTD.", location: "Hall 6.1, 6.1D01", priority: "critical", hall: "6.1" },
+                { name: "JMC AUTOMOTIVE (HUBEI) SYSTEM TECHNOLOGY CO., LTD", location: "Hall 6.1, 6.1D02", priority: "high", hall: "6.1" },
+                { name: "ZHUZHOU GEAR CO., LTD.", location: "Hall 6.1, 6.1E15", priority: "high", hall: "6.1" },
+                { name: "CHANGSHA HAOHSIANG ELECTRICAL MACHINERY CO., LTD.", location: "Hall 6.1, 6.1EA04", priority: "medium", hall: "6.1" },
+                { name: "WANDA MOTOR GROUP CO., LTD", location: "Hall 7.1, 7.1A19", priority: "critical", hall: "7.1" },
+                { name: "SITECH SITRAK NEW ENERGY AUTOMOBILE CO., LTD.", location: "Hall 7.1, 7.1A17", priority: "high", hall: "7.1" },
+                { name: "SHAANXI HEAVY-DUTY AUTOMOBILE CO., LTD.", location: "Hall 7.1, 7.1A11", priority: "high", hall: "7.1" },
+                { name: "ZIBO JUNMA INDUSTRIAL CO., LTD.", location: "Hall 7.1, 7.1E28", priority: "medium", hall: "7.1" },
+                { name: "QINGDAO GREN POWER PRECISION MACHINERY CO.,LTD", location: "Hall 7.1, 7.1H06", priority: "medium", hall: "7.1" },
+                { name: "HEBEI KANGLIDA SPECIAL COMPONENTS CO., LTD.", location: "Hall 7.1, 7.1J22", priority: "low", hall: "7.1" },
+                { name: "ZHEJIANG JINGU COMPANY", location: "Hall 8.1, 8.1C01", priority: "critical", hall: "8.1" },
+                { name: "NINGBO SHENGLONG AUTOMOTIVE POWERTRAIN SYSTEM CO.,LTD.", location: "Hall 8.1, 8.1C12", priority: "high", hall: "8.1" },
+                { name: "NINGBO ZHONGAN AUTO PARTS CO., LTD.", location: "Hall 8.1, 8.1CA04", priority: "high", hall: "8.1" },
+                { name: "NINGBO JINBO AUTO PARTS CO.,LTD", location: "Hall 8.1, 8.1C18", priority: "high", hall: "8.1" },
+                { name: "NINGBO ZHONGFULI TRANSMISSION TECHNOLOGY CO., LTD.", location: "Hall 8.1, 8.1CA02", priority: "medium", hall: "8.1" },
+                { name: "ZHEJIANG ZHONGDA PRECISION MACHINERY CO.,LTD", location: "Hall 8.1, 8.1C08", priority: "medium", hall: "8.1" },
+                { name: "HANGZHOU D&M AUTOMOBILE PARTS CO., LTD.", location: "Hall 2.1, 2.1A09", priority: "high", hall: "2.1" },
+                { name: "HANGZHOU JUNTENG MACHINERY AND ELECTRONICS CO., LTD.", location: "Hall 2.1, 2.1A11", priority: "medium", hall: "2.1" },
+                { name: "CHANGZHOU FENGYI ELECTROMECHANICAL TECH CO., LTD.", location: "Hall 5.2, 5.2A29", priority: "high", hall: "5.2" },
+                { name: "JINHUA JULI ELECTRIC MOTOR CO., LTD.", location: "Hall 5.2, 5.2A31", priority: "medium", hall: "5.2" }
+            ],
+            pending: [
+                { name: "ZHEJIANG SHENGFENG UNIVERSAL SHAFT CO.,LTD", priority: "critical", hall: "TBD" },
+                { name: "NANTONG JIANGTE AUTO PARTS CO., LTD.", priority: "critical", hall: "TBD" },
+                { name: "ZHEJIANG KUCHEN MECHANICAL EQUIPMENT CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "Hangzhou Xinghua Automotive Parts Co., Ltd", priority: "high", hall: "TBD" },
+                { name: "ZHEJIANG RUI CHI AUTO PARTS CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "ZHEJIANG XINJING AUTO PARTS CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "NINGBO JUNGXIN AUTO PARTS CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "ZHEJIANG CHAOTUO AUTOMOBILE PARTS CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "NINGBO SUNSHINEMO AXLE & BEARING CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "ZHEJIANG GREAT BEARING CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "NINGBO KAIGE TRANSMISSION JOINT CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "CHINA EPOWER TECHNOLOGY LIMITED", priority: "high", hall: "TBD" },
+                { name: "Zhejiang Chao Yuan Auto Parts Co., Ltd", priority: "high", hall: "TBD" },
+                { name: "NINGBO QIDA AUTO PARTS CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "CHONGQING XURU AUTOMOBILE PARTS CO., LTD.", priority: "high", hall: "TBD" },
+                { name: "GUANGZHOU CHIYUAN AUTO PARTS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "ZHEJIANG TUOPING AUTO-PARTS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "SHENZHEN WINHERE AUTOMOBILE PARTS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "ZHEJIANG HANDA AUTOPARTS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "SHAOXING YIRUI AUTO PART CO., LTD", priority: "medium", hall: "TBD" },
+                { name: "Zhuji Jinyangguang Machinery Co.,Ltd", priority: "medium", hall: "TBD" },
+                { name: "NINGBO GUANGDA AUTO PARTS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "NINGBO HONGTAI MECHATRONICS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "CHANGZHOU AOTENG AUTO PARTS FACTORY", priority: "medium", hall: "TBD" },
+                { name: "SHAOXING ZHENGMA MACHINERY CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "FORYOU CORPORATION LIMITED", priority: "medium", hall: "TBD" },
+                { name: "NINGBO BOTE AUTOMOBILE PARTS CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "ZHEJIANG CHAODA DYNAMIC CO., LTD.", priority: "medium", hall: "TBD" },
+                { name: "Guangzhou Zhenchao Auto Accessories Co.,Ltd", priority: "medium", hall: "TBD" },
+                { name: "CHONGQING WANJINDA CAR FITTINGS CORPORATION", priority: "low", hall: "TBD" },
+                { name: "CHANGZHOU CHENGDE AUTO PARTS CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "Cixi Shunchuang Ruyi Machinery Manufacturing Co., Ltd.", priority: "low", hall: "TBD" },
+                { name: "WUXI MO FENG DRIVE PARTS CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "WUXI SENPU PRECISION MACHINERY CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "CIXI XIANGYING MECHANICAL FITTINGS FACTORY", priority: "low", hall: "TBD" },
+                { name: "NINGBO JIU CHI MACHINERY CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "YUYAO QIANJIN DRIVE SHAFT CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "CIXI RUIXING BEARING CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "HANGZHOU GRAND-MACHINERY CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "NINGBO NEWCENTURY AUTO PARTS CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "HANGZHOU HUANFENG SHOCK ABSORBER TECHNOLOGY CO., LTD.", priority: "low", hall: "TBD" },
+                { name: "NINGBO XINHENG AUTO PARTS CO., LTD.", priority: "low", hall: "TBD" }
+            ]
+        };
+        
+        // Estado de la aplicación
+        let appState = {
+            visits: {},
+            notInterested: {},
+            details: {},
+            companies: [],
+            backups: [],
+            lastBackup: null
+        };
+        
+        let currentFilters = {
+            confirmed: 'all',
+            pending: 'all'
+        };
+        
+        // Inicializar
+        function init() {
+            loadFromLocalStorage();
+            renderExhibitors();
+            renderCompanies();
+            renderRoute();
+            updateStats();
+            startAutoSave();
+            setupBeforeUnloadHandlers();
+            showSaveIndicator('saved', '✓ Cargado');
+            scheduleAutoBackup();
+        }
+        
+        // Sistema de guardado automático
+        let autoSaveInterval;
+        let lastSaveTime = Date.now();
+        
+        function startAutoSave() {
+            autoSaveInterval = setInterval(() => {
+                saveToLocalStorage();
+            }, 30000);
+            
+            setInterval(updateSaveIndicator, 1000);
+        }
+        
+        function setupBeforeUnloadHandlers() {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    saveToLocalStorage();
+                }
+            });
+            
+            window.addEventListener('pagehide', () => {
+                saveToLocalStorage();
+            });
+            
+            window.addEventListener('beforeunload', () => {
+                saveToLocalStorage();
+            });
+        }
+        
+        function saveToLocalStorage() {
+            try {
+                showSaveIndicator('saving', 'Guardando...');
+                
+                const dataToSave = {
+                    appState: appState,
+                    timestamp: new Date().toISOString(),
+                    version: Date.now()
+                };
+                
+                localStorage.setItem('automechanikaData', JSON.stringify(dataToSave));
+                
+                lastSaveTime = Date.now();
+                showSaveIndicator('saved', '✓ Guardado');
+                
+            } catch (error) {
+                console.error('Error al guardar:', error);
+                showSaveIndicator('error', '❌ Error');
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem('automechanikaData');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    appState = parsed.appState || appState;
+                }
+                
+                const backups = localStorage.getItem('automechanikaBackups');
+                if (backups) {
+                    appState.backups = JSON.parse(backups);
+                }
+            } catch (error) {
+                console.error('Error al cargar:', error);
+            }
+        }
+        
+        function saveManually() {
+            saveToLocalStorage();
+            alert('✅ Datos guardados correctamente');
+        }
+        
+        function showSaveIndicator(status, text) {
+            const indicator = document.getElementById('saveIndicator');
+            const textEl = document.getElementById('saveText');
+            
+            indicator.className = 'save-indicator ' + status;
+            textEl.textContent = text;
+            
+            if (status === 'saved') {
+                setTimeout(() => {
+                    indicator.style.opacity = '0.7';
+                }, 1000);
+            } else {
+                indicator.style.opacity = '1';
+            }
+        }
+        
+        function updateSaveIndicator() {
+            const secondsAgo = Math.floor((Date.now() - lastSaveTime) / 1000);
+            if (secondsAgo < 60) {
+                showSaveIndicator('saved', `✓ ${secondsAgo}s`);
+            } else {
+                const minutesAgo = Math.floor(secondsAgo / 60);
+                showSaveIndicator('saved', `✓ ${minutesAgo}m`);
+            }
+        }
+        
+        // Backup automático diario
+        function scheduleAutoBackup() {
+            const now = new Date();
+            const target = new Date();
+            target.setHours(20, 0, 0, 0);
+            
+            if (now > target) {
+                target.setDate(target.getDate() + 1);
+            }
+            
+            const timeUntilBackup = target - now;
+            
+            setTimeout(() => {
+                createAutoBackup();
+                setInterval(createAutoBackup, 24 * 60 * 60 * 1000);
+            }, timeUntilBackup);
+            
+            updateBackupStatus();
+        }
+        
+        function createAutoBackup() {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                data: JSON.stringify(appState),
+                type: 'auto'
+            };
+            
+            appState.backups.unshift(backup);
+            appState.backups = appState.backups.slice(0, 10);
+            appState.lastBackup = backup.timestamp;
+            
+            localStorage.setItem('automechanikaBackups', JSON.stringify(appState.backups));
+            
+            exportToJSON(true);
+            
+            updateBackupStatus();
+            alert('✅ Backup automático creado correctamente');
+        }
+        
+        function createManualBackup() {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                data: JSON.stringify(appState),
+                type: 'manual'
+            };
+            
+            appState.backups.unshift(backup);
+            appState.backups = appState.backups.slice(0, 10);
+            
+            localStorage.setItem('automechanikaBackups', JSON.stringify(appState.backups));
+            
+            renderBackupHistory();
+            updateBackupStatus();
+            alert('✅ Backup manual creado');
+        }
+        
+        function updateBackupStatus() {
+            const statusEl = document.getElementById('backupStatus');
+            if (appState.lastBackup) {
+                const date = new Date(appState.lastBackup);
+                statusEl.textContent = `Último backup: ${date.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}`;
+            }
+        }
+        
+        function renderBackupHistory() {
+            const historyEl = document.getElementById('backupHistory');
+            
+            if (!appState.backups || appState.backups.length === 0) {
+                historyEl.innerHTML = '<p style="color: #718096;">No hay backups disponibles</p>';
+                return;
+            }
+            
+            historyEl.innerHTML = '<ul style="list-style: none; padding: 0;">';
+            appState.backups.forEach((backup, index) => {
+                const date = new Date(backup.timestamp);
+                const typeLabel = backup.type === 'auto' ? '🔄 Auto' : '💾 Manual';
+                historyEl.innerHTML += `
+                    <li style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #4b5563;">
+                        ${typeLabel} - ${date.toLocaleString('es-ES')}
+                    </li>
+                `;
+            });
+            historyEl.innerHTML += '</ul>';
+        }
+        
+        // Renderizar expositores
+        function renderExhibitors() {
+            renderExhibitorList('confirmed', exhibitorsData.confirmed);
+            renderExhibitorList('pending', exhibitorsData.pending);
+        }
+        
+        function renderExhibitorList(type, exhibitors) {
+            const listEl = document.getElementById(type + 'List');
+            listEl.innerHTML = '';
+            
+            exhibitors.forEach((exhibitor, index) => {
+                const key = `${type}_${index}`;
+                const card = createExhibitorCard(exhibitor, key, type);
+                listEl.appendChild(card);
+            });
+        }
+        
+        function createExhibitorCard(exhibitor, key, type) {
+            const card = document.createElement('div');
+            const isVisited = appState.visits[key];
+            const isNotInterested = appState.notInterested[key];
+            const details = appState.details[key] || {};
+            
+            card.className = 'exhibitor-card' + 
+                (isVisited ? ' visited' : '') + 
+                (isNotInterested ? ' not-interested' : '');
+            card.setAttribute('data-search', exhibitor.name.toLowerCase());
+            card.setAttribute('data-priority', exhibitor.priority);
+            card.setAttribute('data-visited', isVisited ? 'yes' : 'no');
+            card.setAttribute('data-hall', exhibitor.hall || 'TBD');
+            
+            card.innerHTML = `
+                <div class="exhibitor-header">
+                    <div class="exhibitor-info">
+                        <div class="exhibitor-name">${exhibitor.name}</div>
+                        ${exhibitor.location ? 
+                            `<div class="exhibitor-location">📍 ${exhibitor.location}</div>` : 
+                            '<div class="exhibitor-location">📍 Ubicación pendiente</div>'}
+                    </div>
+                    <div class="priority-badge priority-${exhibitor.priority}">
+                        ${exhibitor.priority === 'critical' ? '🔴 Crítica' : 
+                          exhibitor.priority === 'high' ? '🟠 Alta' :
+                          exhibitor.priority === 'medium' ? '🟡 Media' : '🟢 Baja'}
+                    </div>
+                </div>
+                
+                <div class="visit-options">
+                    <button class="visit-btn ${isVisited ? 'active-visited' : ''}" 
+                            onclick="toggleVisit('${key}')">
+                        ✅ Visitado
+                    </button>
+                    <button class="visit-btn ${isNotInterested ? 'active-not-interested' : ''}" 
+                            onclick="toggleNotInterested('${key}')">
+                        ❌ No Interesa
+                    </button>
+                </div>
+                
+                <div class="details-section" style="display: ${isVisited ? 'block' : 'none'};" id="details_${key}">
+                    <div class="form-group">
+                        <label>⭐ Valoración</label>
+                        <div class="rating" id="rating_${key}">
+                            ${[1,2,3,4,5].map(star => 
+                                `<span onclick="setRating('${key}', ${star})">${star <= (details.rating || 0) ? '⭐' : '☆'}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏷️ Productos de Interés</label>
+                        <input type="text" value="${details.products || ''}" 
+                               onchange="saveDetail('${key}', 'products', this.value)"
+                               placeholder="Ej: Cardanes, rodamientos, bombas...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>👤 Contacto</label>
+                        <input type="text" value="${details.contactName || ''}" 
+                               onchange="saveDetail('${key}', 'contactName', this.value)"
+                               placeholder="Nombre del contacto">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💼 Cargo</label>
+                        <input type="text" value="${details.contactPosition || ''}" 
+                               onchange="saveDetail('${key}', 'contactPosition', this.value)"
+                               placeholder="Cargo del contacto">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" value="${details.contactEmail || ''}" 
+                               onchange="saveDetail('${key}', 'contactEmail', this.value)"
+                               placeholder="email@empresa.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📞 Teléfono</label>
+                        <input type="tel" value="${details.contactPhone || ''}" 
+                               onchange="saveDetail('${key}', 'contactPhone', this.value)"
+                               placeholder="+86 138 0000 0000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🕐 Hora de Visita</label>
+                        <input type="time" value="${details.visitTime || ''}" 
+                               onchange="saveDetail('${key}', 'visitTime', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💬 Comentarios</label>
+                        <textarea onchange="saveDetail('${key}', 'comments', this.value)" 
+                                  placeholder="Notas sobre la visita...">${details.comments || ''}</textarea>
+                    </div>
+                    
+                    <div class="photo-upload">
+                        <input type="file" id="photo_${key}" accept="image/*" multiple 
+                               onchange="handlePhotoUpload('${key}', this.files)">
+                        <label for="photo_${key}" class="photo-upload-btn">📷 Añadir Fotos</label>
+                        <div class="photo-preview" id="preview_${key}"></div>
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => renderPhotos(key), 0);
+            
+            return card;
+        }
+        
+        function toggleVisit(key) {
+            appState.visits[key] = !appState.visits[key];
+            
+            if (appState.visits[key]) {
+                appState.notInterested[key] = false;
+                document.getElementById('details_' + key).style.display = 'block';
+            } else {
+                document.getElementById('details_' + key).style.display = 'none';
+            }
+            
+            saveToLocalStorage();
+            updateStats();
+            renderExhibitors();
+        }
+        
+        function toggleNotInterested(key) {
+            appState.notInterested[key] = !appState.notInterested[key];
+            
+            if (appState.notInterested[key]) {
+                appState.visits[key] = false;
+            }
+            
+            saveToLocalStorage();
+            updateStats();
+            renderExhibitors();
+        }
+        
+        function setRating(key, rating) {
+            if (!appState.details[key]) {
+                appState.details[key] = {};
+            }
+            appState.details[key].rating = rating;
+            
+            const ratingEl = document.getElementById('rating_' + key);
+            ratingEl.innerHTML = [1,2,3,4,5].map(star => 
+                `<span onclick="setRating('${key}', ${star})">${star <= rating ? '⭐' : '☆'}</span>`
+            ).join('');
+            
+            saveToLocalStorage();
+        }
+        
+        function saveDetail(key, field, value) {
+            if (!appState.details[key]) {
+                appState.details[key] = {};
+            }
+            appState.details[key][field] = value;
+            saveToLocalStorage();
+        }
+        
+        function handlePhotoUpload(key, files) {
+            if (!appState.details[key]) {
+                appState.details[key] = {};
+            }
+            if (!appState.details[key].photos) {
+                appState.details[key].photos = [];
+            }
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    appState.details[key].photos.push(e.target.result);
+                    saveToLocalStorage();
+                    renderPhotos(key);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function renderPhotos(key) {
+            const previewEl = document.getElementById('preview_' + key);
+            if (!previewEl) return;
+            
+            previewEl.innerHTML = '';
+            const photos = appState.details[key]?.photos || [];
+            
+            photos.forEach((photo) => {
+                const img = document.createElement('img');
+                img.src = photo;
+                img.onclick = () => showImageModal(photo);
+                previewEl.appendChild(img);
+            });
+        }
+        
+        function showImageModal(src) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            img.src = src;
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+        
+        // Gestión de empresas
+        function addCompany() {
+            const name = document.getElementById('companyName').value.trim();
+            const person = document.getElementById('contactPerson').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const phone = document.getElementById('contactPhone').value.trim();
+            const position = document.getElementById('contactPosition').value.trim();
+            const comments = document.getElementById('companyComments').value.trim();
+            
+            if (!name || !person) {
+                alert('⚠️ Rellena al menos nombre y contacto');
+                return;
+            }
+            
+            appState.companies.push({
+                id: Date.now(),
+                name, person, email, phone, position, comments,
+                createdAt: new Date().toISOString()
+            });
+            
+            document.getElementById('companyName').value = '';
+            document.getElementById('contactPerson').value = '';
+            document.getElementById('contactEmail').value = '';
+            document.getElementById('contactPhone').value = '';
+            document.getElementById('contactPosition').value = '';
+            document.getElementById('companyComments').value = '';
+            
+            saveToLocalStorage();
+            renderCompanies();
+            updateStats();
+        }
+        
+        function deleteCompany(id) {
+            if (confirm('¿Eliminar esta empresa?')) {
+                appState.companies = appState.companies.filter(c => c.id !== id);
+                saveToLocalStorage();
+                renderCompanies();
+                updateStats();
+            }
+        }
+        
+        function renderCompanies() {
+            const listEl = document.getElementById('companiesList');
+            const totalEl = document.getElementById('companiesTotal');
+            
+            totalEl.textContent = appState.companies.length;
+            
+            if (appState.companies.length === 0) {
+                listEl.innerHTML = '<p style="text-align: center; color: #718096; padding: 40px;">Sin empresas añadidas</p>';
+                return;
+            }
+            
+            listEl.innerHTML = '';
+            
+            appState.companies.forEach(company => {
+                const card = document.createElement('div');
+                card.className = 'company-card';
+                card.innerHTML = `
+                    <div class="company-card-header">
+                        <div class="company-name">${company.name}</div>
+                        <button class="delete-btn" onclick="deleteCompany(${company.id})">🗑️</button>
+                    </div>
+                    <div class="company-details">
+                        <strong>👤 Contacto:</strong> ${company.person}<br>
+                        ${company.email ? `<strong>📧 Email:</strong> ${company.email}<br>` : ''}
+                        ${company.phone ? `<strong>📞 Teléfono:</strong> ${company.phone}<br>` : ''}
+                        ${company.position ? `<strong>💼 Cargo:</strong> ${company.position}<br>` : ''}
+                        ${company.comments ? `<strong>💬 Comentarios:</strong> ${company.comments}` : ''}
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+        
+        // Ruta optimizada
+        function renderRoute() {
+            const routeEl = document.getElementById('routeList');
+            
+            const allExhibitors = [
+                ...exhibitorsData.confirmed.map((e, i) => ({...e, key: `confirmed_${i}`})),
+                ...exhibitorsData.pending.map((e, i) => ({...e, key: `pending_${i}`}))
+            ];
+            
+            const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+            
+            const sortedRoute = allExhibitors
+                .filter(e => !appState.visits[e.key] && !appState.notInterested[e.key])
+                .sort((a, b) => {
+                    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                        return priorityOrder[a.priority] - priorityOrder[b.priority];
+                    }
+                    return (a.hall || 'ZZZ').localeCompare(b.hall || 'ZZZ');
+                });
+            
+            const byHall = {};
+            sortedRoute.forEach(e => {
+                const hall = e.hall || 'TBD';
+                if (!byHall[hall]) byHall[hall] = [];
+                byHall[hall].push(e);
+            });
+            
+            routeEl.innerHTML = '';
+            
+            Object.keys(byHall).sort().forEach(hall => {
+                const exhibitors = byHall[hall];
+                const card = document.createElement('div');
+                card.className = 'route-card';
+                
+                card.innerHTML = `
+                    <div class="route-header">
+                        <div class="route-title">📍 Hall ${hall}</div>
+                        <div class="route-badge">${exhibitors.length} expositores</div>
+                    </div>
+                    <ul class="route-list">
+                        ${exhibitors.map(e => `
+                            <li>
+                                <strong>${e.name}</strong><br>
+                                <span style="font-size: 12px; color: #718096;">
+                                    ${e.location || 'Ubicación pendiente'} - 
+                                    ${e.priority === 'critical' ? '🔴 Crítica' : 
+                                      e.priority === 'high' ? '🟠 Alta' :
+                                      e.priority === 'medium' ? '🟡 Media' : '🟢 Baja'}
+                                </span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                
+                routeEl.appendChild(card);
+            });
+        }
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            const totalExhibitors = exhibitorsData.confirmed.length + exhibitorsData.pending.length;
+            const totalVisited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+            const totalNotInterested = Object.keys(appState.notInterested).filter(k => appState.notInterested[k]).length;
+            const totalPending = totalExhibitors - totalVisited - totalNotInterested;
+            
+            const confirmedVisited = Object.keys(appState.visits)
+                .filter(k => k.startsWith('confirmed_') && appState.visits[k]).length;
+            const pendingVisited = Object.keys(appState.visits)
+                .filter(k => k.startsWith('pending_') && appState.visits[k]).length;
+            
+            document.getElementById('totalVisited').textContent = totalVisited;
+            document.getElementById('totalPending').textContent = totalPending;
+            document.getElementById('progressPercent').textContent = Math.round((totalVisited / totalExhibitors) * 100) + '%';
+            document.getElementById('companiesCount').textContent = appState.companies.length;
+            document.getElementById('notInterestedCount').textContent = totalNotInterested;
+            
+            document.getElementById('confirmedProgress').textContent = `${confirmedVisited}/${exhibitorsData.confirmed.length}`;
+            document.getElementById('pendingProgress').textContent = `${pendingVisited}/${exhibitorsData.pending.length}`;
+            
+            document.getElementById('confirmedBar').style.width = 
+                ((confirmedVisited / exhibitorsData.confirmed.length) * 100) + '%';
+            document.getElementById('pendingBar').style.width = 
+                ((pendingVisited / exhibitorsData.pending.length) * 100) + '%';
+            document.getElementById('notInterestedBar').style.width = 
+                ((totalNotInterested / totalExhibitors) * 100) + '%';
+            
+            // Por prioridad
+            const allExhibitors = [
+                ...exhibitorsData.confirmed.map((e, i) => ({...e, key: `confirmed_${i}`})),
+                ...exhibitorsData.pending.map((e, i) => ({...e, key: `pending_${i}`}))
+            ];
+            
+            ['critical', 'high', 'medium', 'low'].forEach(priority => {
+                const total = allExhibitors.filter(e => e.priority === priority).length;
+                const visited = allExhibitors.filter(e => e.priority === priority && appState.visits[e.key]).length;
+                const id = priority === 'critical' ? 'criticalStats' : priority === 'high' ? 'highStats' : priority === 'medium' ? 'mediumStats' : 'lowStats';
+                document.getElementById(id).textContent = `${visited}/${total}`;
+            });
+        }
+        
+        // Sistema de pestañas
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'export') {
+                renderBackupHistory();
+            }
+            if (tabName === 'route') {
+                renderRoute();
+            }
+        }
+        
+        // Filtros
+        function filterExhibitors(type, searchTerm) {
+            const cards = document.querySelectorAll(`#${type}List .exhibitor-card`);
+            const term = searchTerm.toLowerCase();
+            
+            cards.forEach(card => {
+                const text = card.getAttribute('data-search');
+                const matchesSearch = text.includes(term);
+                const matchesFilter = matchesCurrentFilter(card, type);
+                
+                card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+            });
+        }
+        
+        function applyFilter(type, filter) {
+            currentFilters[type] = filter;
+            
+            const buttons = document.querySelectorAll(`#${type} .filter-btn`);
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            const cards = document.querySelectorAll(`#${type}List .exhibitor-card`);
+            
+            cards.forEach(card => {
+                card.style.display = matchesCurrentFilter(card, type) ? 'block' : 'none';
+            });
+        }
+        
+        function matchesCurrentFilter(card, type) {
+            const filter = currentFilters[type];
+            
+            if (filter === 'all') return true;
+            if (filter === 'visited') return card.getAttribute('data-visited') === 'yes';
+            if (filter === 'pending') return card.getAttribute('data-visited') === 'no';
+            return card.getAttribute('data-priority') === filter;
+        }
+        
+        // Exportación JSON con Share
+        async function exportToJSON(isAuto = false) {
+            try {
+                const dataToExport = {
+                    exportDate: new Date().toISOString(),
+                    appState: appState,
+                    exhibitorsData: exhibitorsData
+                };
+                
+                const jsonString = JSON.stringify(dataToExport, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const prefix = isAuto ? 'backup_auto_' : 'automechanika_';
+                const fileName = `${prefix}${new Date().toISOString().split('T')[0]}.json`;
+                
+                // Usar Web Share API si está disponible (móvil)
+                if (navigator.share && !isAuto) {
+                    const file = new File([blob], fileName, { type: 'application/json' });
+                    
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Datos Automechanika',
+                            text: 'Backup de datos de la feria'
+                        });
+                        return;
+                    } catch (err) {
+                        // Si cancela, continuar con descarga normal
+                        if (err.name === 'AbortError') return;
+                    }
+                }
+                
+                // Fallback: Descarga normal
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                if (!isAuto) {
+                    alert('✅ JSON exportado');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al exportar JSON');
+            }
+        }
+        
+        // Exportación Word Diario con Share
+        async function exportDailyWord() {
+            try {
+                const date = new Date().toLocaleDateString('es-ES');
+                const totalVisited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+                
+                let content = `INFORME DIARIO - AUTOMECHANIKA SHANGHAI 2025\n`;
+                content += `Lizarte - ${date}\n\n`;
+                content += `RESUMEN\n`;
+                content += `Total visitados: ${totalVisited}\n`;
+                content += `Empresas a visitar: ${appState.companies.length}\n\n`;
+                
+                content += `EXPOSITORES VISITADOS HOY\n\n`;
+                
+                [...exhibitorsData.confirmed, ...exhibitorsData.pending].forEach((exhibitor, index) => {
+                    const type = index < exhibitorsData.confirmed.length ? 'confirmed' : 'pending';
+                    const idx = index < exhibitorsData.confirmed.length ? index : index - exhibitorsData.confirmed.length;
+                    const key = `${type}_${idx}`;
+                    
+                    if (appState.visits[key]) {
+                        const details = appState.details[key] || {};
+                        content += `${exhibitor.name}\n`;
+                        if (exhibitor.location) content += `Ubicación: ${exhibitor.location}\n`;
+                        if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)}\n`;
+                        if (details.products) content += `Productos: ${details.products}\n`;
+                        if (details.contactName) content += `Contacto: ${details.contactName}`;
+                        if (details.contactPosition) content += ` (${details.contactPosition})`;
+                        if (details.contactName) content += `\n`;
+                        if (details.comments) content += `Comentarios: ${details.comments}\n`;
+                        content += `\n`;
+                    }
+                });
+                
+                if (appState.companies.length > 0) {
+                    content += `EMPRESAS A VISITAR\n\n`;
+                    appState.companies.forEach(company => {
+                        content += `${company.name}\n`;
+                        content += `Contacto: ${company.person}`;
+                        if (company.position) content += ` (${company.position})`;
+                        content += `\n`;
+                        if (company.email) content += `Email: ${company.email}\n`;
+                        if (company.phone) content += `Teléfono: ${company.phone}\n`;
+                        if (company.comments) content += `Notas: ${company.comments}\n`;
+                        content += `\n`;
+                    });
+                }
+                
+                const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
+                const fileName = `informe_diario_${new Date().toISOString().split('T')[0]}.doc`;
+                
+                // Usar Web Share API si está disponible
+                if (navigator.share) {
+                    const file = new File([blob], fileName, { type: 'application/msword' });
+                    
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Informe Diario Automechanika',
+                            text: `Informe del ${date}`
+                        });
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                    }
+                }
+                
+                // Fallback: Descarga normal
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                alert('✅ Informe diario generado');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al generar informe');
+            }
+        }
+        
+        // Exportación Word Completo con Share
+        async function exportCompleteWord() {
+            try {
+                const date = new Date().toLocaleDateString('es-ES');
+                const totalVisited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+                const totalExhibitors = exhibitorsData.confirmed.length + exhibitorsData.pending.length;
+                
+                let content = `INFORME COMPLETO - AUTOMECHANIKA SHANGHAI 2025\n`;
+                content += `Lizarte\n`;
+                content += `Fecha: ${date}\n\n`;
+                content += `════════════════════════════════════════\n\n`;
+                
+                content += `RESUMEN EJECUTIVO\n\n`;
+                content += `Total de expositores: ${totalExhibitors}\n`;
+                content += `Expositores visitados: ${totalVisited}\n`;
+                content += `Porcentaje completado: ${Math.round((totalVisited / totalExhibitors) * 100)}%\n`;
+                content += `Empresas adicionales: ${appState.companies.length}\n\n`;
+                content += `════════════════════════════════════════\n\n`;
+                
+                content += `RUTA CONFIRMADA - EXPOSITORES VISITADOS\n\n`;
+                
+                exhibitorsData.confirmed.forEach((exhibitor, index) => {
+                    const key = `confirmed_${index}`;
+                    if (appState.visits[key]) {
+                        const details = appState.details[key] || {};
+                        content += `\n${exhibitor.name}\n`;
+                        content += `${'-'.repeat(exhibitor.name.length)}\n`;
+                        content += `Ubicación: ${exhibitor.location}\n`;
+                        content += `Prioridad: ${exhibitor.priority}\n`;
+                        if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)} (${details.rating}/5)\n`;
+                        if (details.products) content += `Productos de interés: ${details.products}\n`;
+                        if (details.contactName) {
+                            content += `\nCONTACTO:\n`;
+                            content += `Nombre: ${details.contactName}\n`;
+                            if (details.contactPosition) content += `Cargo: ${details.contactPosition}\n`;
+                            if (details.contactEmail) content += `Email: ${details.contactEmail}\n`;
+                            if (details.contactPhone) content += `Teléfono: ${details.contactPhone}\n`;
+                        }
+                        if (details.visitTime) content += `Hora de visita: ${details.visitTime}\n`;
+                        if (details.comments) content += `\nComentarios:\n${details.comments}\n`;
+                        if (details.photos && details.photos.length > 0) {
+                            content += `Fotos adjuntas: ${details.photos.length}\n`;
+                        }
+                        content += `\n`;
+                    }
+                });
+                
+                content += `\n════════════════════════════════════════\n\n`;
+                content += `RUTA PENDIENTE - EXPOSITORES VISITADOS\n\n`;
+                
+                exhibitorsData.pending.forEach((exhibitor, index) => {
+                    const key = `pending_${index}`;
+                    if (appState.visits[key]) {
+                        const details = appState.details[key] || {};
+                        content += `\n${exhibitor.name}\n`;
+                        content += `${'-'.repeat(exhibitor.name.length)}\n`;
+                        content += `Prioridad: ${exhibitor.priority}\n`;
+                        if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)} (${details.rating}/5)\n`;
+                        if (details.products) content += `Productos de interés: ${details.products}\n`;
+                        if (details.contactName) {
+                            content += `\nCONTACTO:\n`;
+                            content += `Nombre: ${details.contactName}\n`;
+                            if (details.contactPosition) content += `Cargo: ${details.contactPosition}\n`;
+                            if (details.contactEmail) content += `Email: ${details.contactEmail}\n`;
+                            if (details.contactPhone) content += `Teléfono: ${details.contactPhone}\n`;
+                        }
+                        if (details.visitTime) content += `Hora de visita: ${details.visitTime}\n`;
+                        if (details.comments) content += `\nComentarios:\n${details.comments}\n`;
+                        if (details.photos && details.photos.length > 0) {
+                            content += `Fotos adjuntas: ${details.photos.length}\n`;
+                        }
+                        content += `\n`;
+                    }
+                });
+                
+                if (appState.companies.length > 0) {
+                    content += `\n════════════════════════════════════════\n\n`;
+                    content += `EMPRESAS ADICIONALES A VISITAR\n\n`;
+                    
+                    appState.companies.forEach(company => {
+                        content += `\n${company.name}\n`;
+                        content += `${'-'.repeat(company.name.length)}\n`;
+                        content += `Contacto: ${company.person}\n`;
+                        if (company.position) content += `Cargo: ${company.position}\n`;
+                        if (company.email) content += `Email: ${company.email}\n`;
+                        if (company.phone) content += `Teléfono: ${company.phone}\n`;
+                        if (company.comments) content += `Notas: ${company.comments}\n`;
+                        content += `\n`;
+                    });
+                }
+                
+                content += `\n════════════════════════════════════════\n`;
+                content += `Fin del informe\n`;
+                content += `Generado: ${new Date().toLocaleString('es-ES')}\n`;
+                
+                const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
+                const fileName = `informe_completo_automechanika_${new Date().toISOString().split('T')[0]}.doc`;
+                
+                // Usar Web Share API si está disponible
+                if (navigator.share) {
+                    const file = new File([blob], fileName, { type: 'application/msword' });
+                    
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Informe Completo Automechanika',
+                            text: `Informe completo del ${date}`
+                        });
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                    }
+                }
+                
+                // Fallback: Descarga normal
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                alert('✅ Informe completo generado');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al generar informe completo');
+            }
+        }
+        
+        // Importación
+        function importFromJSON() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('⚠️ Selecciona un archivo JSON');
+                return;
+            }
+            
+            if (!confirm('⚠️ Esto sobrescribirá todos los datos. ¿Continuar?')) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    appState = imported.appState;
+                    saveToLocalStorage();
+                    renderExhibitors();
+                    renderCompanies();
+                    renderRoute();
+                    updateStats();
+                    alert('✅ Datos importados correctamente');
+                    switchTab('overview');
+                } catch (error) {
+                    alert('❌ Error: archivo no válido');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // Inicializar
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
