@@ -1,1 +1,0 @@
-# automechanika-2025
