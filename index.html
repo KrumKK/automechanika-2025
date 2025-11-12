@@ -1033,6 +1033,11 @@
                 
                 // 2. Guardar datos principales
                 const dataString = JSON.stringify(dataToSave);
+                
+                // Calcular tamaño aproximado
+                const sizeKB = Math.round((dataString.length * 2) / 1024); // Aproximado en KB
+                console.log(`💾 Guardando ~${sizeKB}KB de datos`);
+                
                 localStorage.setItem('automechanikaData', dataString);
                 
                 // 3. Verificar que se guardó correctamente
@@ -1043,7 +1048,11 @@
                 
                 // 4. Guardar backup secundario cada 5 guardados
                 if (Math.random() < 0.2) { // 20% de las veces
-                    localStorage.setItem('automechanikaData_backup2', dataString);
+                    try {
+                        localStorage.setItem('automechanikaData_backup2', dataString);
+                    } catch (e) {
+                        console.warn('No se pudo crear backup secundario (probablemente por espacio)');
+                    }
                 }
                 
                 lastSaveTime = Date.now();
@@ -1052,7 +1061,14 @@
                 
             } catch (error) {
                 console.error('❌ Error al guardar:', error);
-                showSaveIndicator('error', '❌ Error');
+                
+                // Detectar si es por límite de espacio
+                if (error.name === 'QuotaExceededError' || error.code === 22) {
+                    showSaveIndicator('error', '❌ Sin espacio');
+                    alert('⚠️ LÍMITE DE ALMACENAMIENTO\n\nHas alcanzado el límite de fotos.\n\nSOLUCIÓN:\n1. Exporta JSON ahora\n2. Borra algunas fotos antiguas\n3. O continúa sin más fotos\n\nTus datos están seguros.');
+                } else {
+                    showSaveIndicator('error', '❌ Error');
+                }
                 
                 // Intentar guardar en emergencia
                 try {
@@ -1063,6 +1079,7 @@
                     console.log('⚠️ Guardado en modo emergencia (sessionStorage)');
                 } catch (e) {
                     console.error('💥 Error crítico en guardado emergencia:', e);
+                    alert('⚠️ ERROR CRÍTICO\n\nExporta JSON AHORA para no perder datos.');
                 }
             }
         }
@@ -1577,6 +1594,47 @@
             }, 800);
         }
         
+        // Función para comprimir imagen
+        function compressImage(file, maxWidth = 1024, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Crear canvas para redimensionar
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Redimensionar si es muy grande
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Comprimir a JPEG con calidad reducida
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        
+                        // Calcular tamaño
+                        const sizeKB = Math.round((compressedDataUrl.length * 3/4) / 1024);
+                        console.log(`📸 Foto comprimida: ${img.width}x${img.height} → ${width}x${height}, ~${sizeKB}KB`);
+                        
+                        resolve(compressedDataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
         async function handlePhotoUpload(key, files) {
             if (!appState.details[key]) {
                 appState.details[key] = {};
@@ -1585,24 +1643,35 @@
                 appState.details[key].photos = [];
             }
             
-            // Procesar todas las fotos antes de guardar
-            const fileArray = Array.from(files);
-            const photoPromises = fileArray.map(file => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        appState.details[key].photos.push(e.target.result);
-                        resolve();
-                    };
-                    reader.readAsDataURL(file);
+            try {
+                showSaveIndicator('saving', '📸 Comprimiendo fotos...');
+                
+                // Procesar y comprimir todas las fotos
+                const fileArray = Array.from(files);
+                const photoPromises = fileArray.map(file => compressImage(file));
+                
+                // Esperar a que todas las fotos se compriman
+                const compressedPhotos = await Promise.all(photoPromises);
+                
+                // Añadir fotos comprimidas al estado
+                compressedPhotos.forEach(photo => {
+                    appState.details[key].photos.push(photo);
                 });
-            });
-            
-            // Esperar a que todas las fotos se carguen
-            await Promise.all(photoPromises);
-            saveToLocalStorage();
-            renderPhotos(key);
-            alert(`✅ ${fileArray.length} foto(s) añadida(s)`);
+                
+                // Guardar
+                saveToLocalStorage();
+                renderPhotos(key);
+                
+                showSaveIndicator('saved', '✅ Fotos guardadas');
+                setTimeout(() => {
+                    alert(`✅ ${fileArray.length} foto(s) añadida(s) y comprimida(s)`);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error al procesar fotos:', error);
+                showSaveIndicator('error', '❌ Error con fotos');
+                alert('❌ Error al procesar fotos. Inténtalo de nuevo.');
+            }
         }
         
         function renderPhotos(key) {
