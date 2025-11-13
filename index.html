@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Automechanika 2025">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23667eea' width='100' height='100'/><text y='70' x='50' text-anchor='middle' font-size='60' fill='white'>🏭</text></svg>">
+    <title>Automechanika Shanghai 2025 - Lizarte</title>
+    
+    <!--
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  VERSIÓN 2.0 - IndexedDB - 12 Nov 2025                       ║
+    ║  Sistema de fotos con IndexedDB y límite de 3 fotos          ║
+    ╚══════════════════════════════════════════════════════════════╝
+    
+    🆕 NUEVAS CARACTERÍSTICAS:
+    
+    ✅ 1. INDEXEDDB PARA FOTOS
+       - 50MB de almacenamiento disponible
+       - Mucho más espacio que localStorage (5-10MB)
+       - 255 fotos máximo (85 stands × 3 fotos)
+    
+    ✅ 2. COMPRESIÓN OPTIMIZADA
+       - Reducción a 60KB por foto (antes 150KB)
+       - Calidad 60%, máximo 800px
+       - Mantiene calidad visual para móvil
+    
+    ✅ 3. LÍMITE DE 3 FOTOS POR STAND
+       - Contador visual "2/3 fotos"
+       - Botón deshabilitado al llegar a 3
+       - Espacio garantizado para 255 fotos
+    
+    ✅ 4. SISTEMA HÍBRIDO
+       - localStorage: textos, notas, datos
+       - IndexedDB: solo fotos (grandes)
+       - Migración automática de fotos antiguas
+    
+    ✅ 5. DESCARGA DE FOTOS A GALERÍA
+       - Botón 💾 en cada foto
+       - Guarda fotos en tu iPhone/galería
+       - Usa Web Share API para mejor integración
+    
+    📊 CÁLCULOS:
+    - 85 stands × 3 fotos × 60KB = 15.3MB
+    - Límite IndexedDB: 50MB
+    - Margen disponible: 34.7MB
+    -->
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: 80px;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .backup-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        
+        .header-save-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+        }
+        
+        .header-save-btn:active {
+            transform: scale(0.95);
+            background: #059669;
+        }
+        
+        @media (max-width: 480px) {
+            .header-save-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .save-indicator.saving { background: #f59e0b; }
+        .save-indicator.saved { background: #10b981; }
+        .save-indicator.error { background: #ef4444; }
+        
+        .save-indicator .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 110px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-card h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .exhibitor-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #cbd5e0;
+            transition: all 0.3s;
+        }
+        
+        .exhibitor-card:active {
+            transform: scale(0.98);
+        }
+        
+        .exhibitor-card.visited {
+            background: #d1fae5;
+            border-left-color: #10b981;
+        }
+        
+        .exhibitor-card.not-interested {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+        
+        .exhibitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .exhibitor-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+            flex: 1;
+        }
+        
+        .priority {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .priority.high { background: #fecaca; color: #991b1b; }
+        .priority.medium { background: #fed7aa; color: #92400e; }
+        .priority.low { background: #dbeafe; color: #1e40af; }
+        
+        .exhibitor-location {
+            color: #4a5568;
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-visited {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-not-interested {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-details {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1a202c;
+        }
+        
+        .details-form {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        
+        .rating-stars span {
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .rating-stars span:hover {
+            transform: scale(1.2);
+        }
+        
+        .photo-upload {
+            margin-top: 15px;
+        }
+        
+        .photo-counter {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .photo-counter.full {
+            background: #ef4444;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .photo-download {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+        }
+        
+        .company-form {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .company-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .route-section {
+            margin-bottom: 25px;
+        }
+        
+        .route-section h3 {
+            font-size: 18px;
+            color: #2d3748;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .route-item {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #10b981;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        
+        .route-item.visited {
+            background: #f0fdf4;
+        }
+        
+        .route-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .route-item strong {
+            color: #1a202c;
+            font-size: 14px;
+        }
+        
+        .route-item p {
+            color: #4a5568;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        
+        .export-buttons {
+            display: grid;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .export-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .import-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff5f5;
+            border-radius: 12px;
+            border: 2px dashed #fc8181;
+        }
+        
+        .filter-bar {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-bar select,
+        .filter-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 { font-size: 20px; }
+            .exhibitor-card { padding: 12px; }
+            .btn { font-size: 12px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="header-save-btn" onclick="manualSave()">💾 Guardar</button>
+            <h1>🏭 Automechanika Shanghai 2025</h1>
+            <p>Lizarte - Gestión de Visitas</p>
+            <div class="backup-status" id="backupStatus">✓ Guardado</div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Resumen</button>
+            <button class="tab" onclick="switchTab('confirmed')">✅ Confirmada</button>
+            <button class="tab" onclick="switchTab('pending')">⏳ Pendiente</button>
+            <button class="tab" onclick="switchTab('additional')">➕ Adicionales</button>
+            <button class="tab" onclick="switchTab('route')">🗺️ Ruta</button>
+            <button class="tab" onclick="switchTab('export')">📤 Exportar</button>
+        </div>
+        
+        <div id="overview" class="tab-content active">
+            <h2 style="margin-bottom: 20px; color: #2d3748;">📊 Resumen General</h2>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+        
+        <div id="confirmed" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">✅ Ruta Confirmada (43 expositores)</h2>
+            <div class="filter-bar">
+                <select id="filterPriority" onchange="renderExhibitors()">
+                    <option value="all">Todas las prioridades</option>
+                    <option value="high">🔴 Alta prioridad</option>
+                    <option value="medium">🟡 Media prioridad</option>
+                    <option value="low">🔵 Baja prioridad</option>
+                </select>
+                <input type="text" id="searchConfirmed" placeholder="🔍 Buscar expositor..." oninput="renderExhibitors()">
+            </div>
+            <div id="confirmedList"></div>
+        </div>
+        
+        <div id="pending" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">⏳ Ruta Pendiente (42 expositores)</h2>
+            <div class="filter-bar">
+                <input type="text" id="searchPending" placeholder="🔍 Buscar expositor..." oninput="renderExhibitors()">
+            </div>
+            <div id="pendingList"></div>
+        </div>
+        
+        <div id="additional" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">➕ Empresas Adicionales</h2>
+            <div class="company-form">
+                <h3 style="margin-bottom: 15px; color: #2d3748;">Añadir Nueva Empresa</h3>
+                <div class="form-group">
+                    <input type="text" id="newCompanyName" placeholder="Nombre de la empresa">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="newCompanyPerson" placeholder="Persona de contacto">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="newCompanyPosition" placeholder="Cargo (opcional)">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="newCompanyEmail" placeholder="Email (opcional)">
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="newCompanyPhone" placeholder="Teléfono (opcional)">
+                </div>
+                <div class="form-group">
+                    <textarea id="newCompanyComments" placeholder="Notas o comentarios..."></textarea>
+                </div>
+                <button class="btn btn-visited" onclick="addCompany()" style="width: 100%;">➕ Añadir Empresa</button>
+            </div>
+            <div id="companiesList"></div>
+        </div>
+        
+        <div id="route" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">🗺️ Ruta Planificada</h2>
+            <div id="routeContent"></div>
+        </div>
+        
+        <div id="export" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">📤 Exportar Datos</h2>
+            
+            <div class="export-buttons">
+                <button class="export-btn" onclick="exportJSON()">
+                    📋 Exportar JSON (Backup Completo)
+                </button>
+                
+                <button class="export-btn" onclick="exportDailyReport()">
+                    📝 Informe Diario (Word con fotos)
+                </button>
+                
+                <button class="export-btn" onclick="exportCompleteWord()">
+                    📑 Informe Completo
+                </button>
+                
+                <button class="export-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" onclick="copyReportToClipboard()">
+                    📋 Copiar al Portapapeles
+                </button>
+                
+                <button class="export-btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);" onclick="showReportInModal()">
+                    👁️ Ver Informe en Pantalla
+                </button>
+            </div>
+            
+            <p style="margin-top: 15px; padding: 15px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 8px; font-size: 13px; color: #92400e;">
+                <strong>💡 Para OneNote:</strong><br>
+                1. Usa "📋 Copiar al Portapapeles"<br>
+                2. Abre OneNote y crea una página<br>
+                3. Mantén presionado y selecciona "Pegar"<br>
+                <br>
+                Si "Copiar" no funciona, usa "👁️ Ver en Pantalla" y copia manualmente.
+            </p>
+            
+            <div class="import-section">
+                <h3 style="color: #c53030; margin-bottom: 10px;">⚠️ Importar Datos</h3>
+                <p style="color: #742a2a; font-size: 13px; margin-bottom: 15px;">
+                    Esta acción sobrescribirá todos los datos actuales
+                </p>
+                <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px;">
+                <button class="btn btn-not-interested" onclick="importFromJSON()">
+                    📥 Importar desde JSON
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // SISTEMA INDEXEDDB PARA FOTOS
+        // ═══════════════════════════════════════════════════════════
+        
+        let photoDB;
+        const DB_NAME = 'AutomechanikaPhotos';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'photos';
+        const MAX_PHOTOS_PER_STAND = 3;
+        const STORAGE_LIMIT_MB = 50;
+        
+        // Inicializar IndexedDB
+        async function initPhotoDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                
+                request.onsuccess = () => {
+                    photoDB = request.result;
+                    console.log('✅ IndexedDB inicializada');
+                    resolve(photoDB);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                        console.log('📦 Object Store creado');
+                    }
+                };
+            });
+        }
+        
+        // Guardar foto en IndexedDB
+        async function savePhotoToDB(key, photoData) {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put({ id: key, data: photoData });
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Obtener fotos de IndexedDB
+        async function getPhotosFromDB(key) {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(key);
+                
+                request.onsuccess = () => {
+                    resolve(request.result ? request.result.data : []);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Eliminar foto de IndexedDB
+        async function deletePhotoFromDB(key) {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(key);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Obtener tamaño total usado en IndexedDB
+        async function getDBSize() {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    let totalSize = 0;
+                    request.result.forEach(item => {
+                        if (item.data && Array.isArray(item.data)) {
+                            item.data.forEach(photo => {
+                                totalSize += photo.length * 0.75; // Aproximación base64
+                            });
+                        }
+                    });
+                    resolve(totalSize);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Migrar fotos antiguas de localStorage a IndexedDB
+        async function migrateOldPhotos() {
+            console.log('🔄 Migrando fotos antiguas...');
+            let migrated = 0;
+            
+            for (const key in appState.details) {
+                const details = appState.details[key];
+                if (details.photos && details.photos.length > 0) {
+                    try {
+                        await savePhotoToDB(key, details.photos);
+                        migrated += details.photos.length;
+                        console.log(`✅ Migradas ${details.photos.length} fotos de ${key}`);
+                    } catch (error) {
+                        console.error(`❌ Error migrando ${key}:`, error);
+                    }
+                }
+            }
+            
+            if (migrated > 0) {
+                console.log(`✅ ${migrated} fotos migradas a IndexedDB`);
+                // Limpiar fotos de localStorage después de migrar
+                for (const key in appState.details) {
+                    if (appState.details[key].photos) {
+                        delete appState.details[key].photos;
+                    }
+                }
+                saveToLocalStorage();
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // ESTADO DE LA APLICACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        let appState = {
+            visits: {},
+            notInterested: {},
+            details: {},
+            companies: []
+        };
+        
+        let saveTimeout;
+        let backupInterval;
+        
+        // ═══════════════════════════════════════════════════════════
+        // DATOS DE EXPOSITORES
+        // ═══════════════════════════════════════════════════════════
+        
+        const exhibitorsData = {
+            confirmed: [
+                { name: "Amico", location: "Hall 2.1 Stand A51", priority: "high" },
+                { name: "Hangzhou Goldenfly Auto Parts", location: "Hall 2.1 Stand A62", priority: "high" },
+                { name: "Taizhou Joyoung Axle Co. Ltd.", location: "Hall 2.1 Stand B11", priority: "high" },
+                { name: "KYB (Europe)", location: "Hall 2.1 Stand B38", priority: "high" },
+                { name: "ZF Active Safety & Electronics US LLC", location: "Hall 2.1 Stand B50", priority: "medium" },
+                { name: "ZF Aftermarket", location: "Hall 2.1 Stand B50", priority: "high" },
+                { name: "ZHEJIANG TONY TECHNOLOGY CO., LTD.", location: "Hall 2.1 Stand C12", priority: "high" },
+                { name: "Zhejiang Asia-Pacific", location: "Hall 2.1 Stand C17", priority: "low" },
+                { name: "Hangzhou Kefeng Auto Parts Co., Ltd.", location: "Hall 2.1 Stand C67", priority: "high" },
+                { name: "Zhejiang Xianglai Casting Co., Ltd.", location: "Hall 2.1 Stand D05", priority: "medium" },
+                { name: "Marelli Parts", location: "Hall 2.1 Stand D13", priority: "high" },
+                { name: "Zhejiang Wanda Automotive Steering System Co., Ltd.", location: "Hall 2.1 Stand D19", priority: "high" },
+                { name: "Huzhou Tuofeng Auto Electrical Appliance Co., Ltd.", location: "Hall 2.1 Stand D29", priority: "high" },
+                { name: "FTE automotive", location: "Hall 2.1 Stand D48", priority: "high" },
+                { name: "Wanxiang Qianchao Co., Ltd.", location: "Hall 2.1 Stand E01", priority: "high" },
+                { name: "Nexteer Automotive", location: "Hall 2.1 Stand E14", priority: "high" },
+                { name: "Zhejiang VIE Science & Technology Co., Ltd.", location: "Hall 2.1 Stand E21", priority: "high" },
+                { name: "Wuhu Yilite Auto Parts CO., Ltd.", location: "Hall 2.1 Stand E22", priority: "high" },
+                { name: "Bosch", location: "Hall 2.1 Stand E35", priority: "high" },
+                { name: "Zhejiang Yinlun Machinery Co., Ltd.", location: "Hall 2.1 Stand F01", priority: "high" },
+                { name: "CENS", location: "Hall 3.1 Stand A34", priority: "low" },
+                { name: "China Int'l Hardware Show", location: "Hall 3.1 Stand B01", priority: "low" },
+                { name: "Autofact (Malaysia)", location: "Hall 4.1 Stand A26", priority: "low" },
+                { name: "Valeo Service Deutschland GmbH", location: "Hall 4.1 Stand A49", priority: "high" },
+                { name: "Valeo Siemens eAutomotive", location: "Hall 4.1 Stand A49", priority: "high" },
+                { name: "SKF (China) Co., Ltd.", location: "Hall 4.1 Stand B01", priority: "high" },
+                { name: "Magneti Marelli Aftermarket", location: "Hall 4.1 Stand B70", priority: "high" },
+                { name: "Dayco Europe", location: "Hall 4.1 Stand E01", priority: "high" },
+                { name: "Rheinmetall Automotive", location: "Hall 4.1 Stand F01", priority: "high" },
+                { name: "Schaeffler", location: "Hall 5.2 Stand A01", priority: "high" },
+                { name: "Textar", location: "Hall 5.2 Stand B17", priority: "high" },
+                { name: "Nissens", location: "Hall 5.2 Stand B29", priority: "high" },
+                { name: "Federal-Mogul Motorparts", location: "Hall 5.2 Stand C01", priority: "high" },
+                { name: "Delphi Technologies", location: "Hall 5.2 Stand C01", priority: "high" },
+                { name: "TMD Friction", location: "Hall 5.2 Stand C41", priority: "high" },
+                { name: "Hella", location: "Hall 5.2 Stand D01", priority: "high" },
+                { name: "Tenneco Inc.", location: "Hall 5.2 Stand D20", priority: "high" },
+                { name: "Meyle AG", location: "Hall 5.2 Stand D44", priority: "high" },
+                { name: "Lemfoerder", location: "Hall 5.2 Stand E10", priority: "high" },
+                { name: "Gates", location: "Hall 5.2 Stand E28", priority: "high" },
+                { name: "Bilstein", location: "Hall 5.2 Stand F50", priority: "high" },
+                { name: "MANN+HUMMEL GmbH", location: "Hall 6.2 Stand B75", priority: "high" },
+                { name: "Sogefi", location: "Hall 6.2 Stand B80", priority: "high" }
+            ],
+            pending: [
+                { name: "Shandong Hengyu Auto Parts Co., Ltd.", priority: "medium" },
+                { name: "Hangzhou Jielong Transmission Machinery Co., Ltd.", priority: "medium" },
+                { name: "Wenzhou Jiangnan Pulley Manufacture Co., Ltd.", priority: "low" },
+                { name: "Hefei Bolin Advanced Materials Co., Ltd.", priority: "medium" },
+                { name: "Shanghai Fengshen Autoparts Co., Ltd.", priority: "high" },
+                { name: "Zhejiang Ruili Industrial and Trading Co., Ltd.", priority: "medium" },
+                { name: "Yinlun Refrigeration Equipment Co., Ltd.", priority: "medium" },
+                { name: "Huzhou Tuofeng", priority: "medium" },
+                { name: "Huzhou Tuofeng Auto Electrical Appliance Co., Ltd.", priority: "medium" },
+                { name: "Thai Summit PKK", priority: "medium" },
+                { name: "BBB Industries", priority: "medium" },
+                { name: "Metelli", priority: "high" },
+                { name: "Sanmak Automotive", priority: "low" },
+                { name: "Akebono Brake Industry Co., Ltd.", priority: "high" },
+                { name: "Zhejiang Sanhua Automotive Components Co., Ltd.", priority: "medium" },
+                { name: "Tong Hwei", priority: "low" },
+                { name: "Yuh Jaan Enterprises Co., Ltd.", priority: "medium" },
+                { name: "Fu Ta Quan", priority: "low" },
+                { name: "T. M. Hung Enterprise Co., Ltd.", priority: "low" },
+                { name: "UNA Autoparts Manufacture Co., Ltd.", priority: "low" },
+                { name: "Chia Feng Enterprises Co., Ltd.", priority: "low" },
+                { name: "NTN", priority: "high" },
+                { name: "Koito Manufacturing", priority: "medium" },
+                { name: "JTEKT Corporation", priority: "high" },
+                { name: "NSK", priority: "high" },
+                { name: "AISIN", priority: "high" },
+                { name: "DENSO", priority: "high" },
+                { name: "Stanley Electric", priority: "medium" },
+                { name: "Showa Corporation", priority: "medium" },
+                { name: "Continental", priority: "high" },
+                { name: "Mahle", priority: "high" },
+                { name: "Behr-Hella Thermocontrol GmbH", priority: "high" },
+                { name: "Pierburg", priority: "high" },
+                { name: "Kolbenschmidt", priority: "medium" },
+                { name: "UFI Filters", priority: "high" },
+                { name: "Magneti Marelli Parts & Services S.p.A.", priority: "high" },
+                { name: "Brembo", priority: "high" },
+                { name: "Sachs", priority: "high" },
+                { name: "LUK", priority: "high" },
+                { name: "INA", priority: "high" },
+                { name: "FAG", priority: "high" },
+                { name: "Lemfoerder (TRW Automotive)", priority: "high" },
+                { name: "BorgWarner Inc.", priority: "high" }
+            ]
+        };
+        
+        // ═══════════════════════════════════════════════════════════
+        // SISTEMA DE GUARDADO Y RECUPERACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        function saveToLocalStorage() {
+            try {
+                const dataStr = JSON.stringify(appState);
+                
+                // Backup antes de guardar
+                const existingData = localStorage.getItem('automechanika_data');
+                if (existingData) {
+                    localStorage.setItem('automechanika_backup', existingData);
+                    
+                    // Backup secundario aleatorio
+                    if (Math.random() < 0.2) {
+                        localStorage.setItem('automechanika_backup2', existingData);
+                    }
+                }
+                
+                // Guardar datos principales
+                localStorage.setItem('automechanika_data', dataStr);
+                
+                // Backup de emergencia en sessionStorage
+                sessionStorage.setItem('automechanika_emergency', dataStr);
+                
+                // Verificar que se guardó correctamente
+                const saved = localStorage.getItem('automechanika_data');
+                if (saved === dataStr) {
+                    updateBackupStatus('✓ Guardado');
+                    console.log('✅ Datos guardados correctamente');
+                } else {
+                    throw new Error('Verificación falló');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error al guardar:', error);
+                
+                // Intento de emergencia en sessionStorage
+                try {
+                    sessionStorage.setItem('automechanika_emergency', JSON.stringify(appState));
+                    updateBackupStatus('⚠️ Guardado emergencia');
+                } catch (e) {
+                    updateBackupStatus('❌ Error guardado');
+                }
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            try {
+                // Nivel 1: Datos principales
+                let dataStr = localStorage.getItem('automechanika_data');
+                
+                if (!dataStr) {
+                    // Nivel 2: Backup principal
+                    dataStr = localStorage.getItem('automechanika_backup');
+                    if (dataStr) console.log('🔄 Recuperado desde backup principal');
+                }
+                
+                if (!dataStr) {
+                    // Nivel 3: Backup secundario
+                    dataStr = localStorage.getItem('automechanika_backup2');
+                    if (dataStr) console.log('🔄 Recuperado desde backup secundario');
+                }
+                
+                if (!dataStr) {
+                    // Nivel 4: Emergencia sessionStorage
+                    dataStr = sessionStorage.getItem('automechanika_emergency');
+                    if (dataStr) console.log('🔄 Recuperado desde emergencia');
+                }
+                
+                if (dataStr) {
+                    const loaded = JSON.parse(dataStr);
+                    appState = loaded;
+                    console.log('✅ Datos cargados correctamente');
+                } else {
+                    console.log('ℹ️ No hay datos previos');
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar datos:', error);
+                alert('⚠️ Error al cargar datos. Iniciando con datos limpios.');
+            }
+        }
+        
+        function updateBackupStatus(text) {
+            const status = document.getElementById('backupStatus');
+            if (status) {
+                status.textContent = text;
+            }
+        }
+        
+        function showSaveIndicator(type = 'saving', message = 'Guardando...') {
+            let indicator = document.querySelector('.save-indicator');
+            
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.className = 'save-indicator';
+                document.body.appendChild(indicator);
+            }
+            
+            indicator.className = `save-indicator ${type}`;
+            
+            if (type === 'saving') {
+                indicator.innerHTML = `<div class="spinner"></div> ${message}`;
+            } else if (type === 'saved') {
+                indicator.innerHTML = `✓ ${message}`;
+            } else if (type === 'error') {
+                indicator.innerHTML = `✗ ${message}`;
+            }
+            
+            indicator.style.display = 'flex';
+            
+            if (type !== 'saving') {
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // Guardado con debounce
+        function scheduleSave() {
+            clearTimeout(saveTimeout);
+            showSaveIndicator('saving', 'Guardando...');
+            
+            saveTimeout = setTimeout(() => {
+                saveToLocalStorage();
+                showSaveIndicator('saved', 'Guardado');
+            }, 800);
+        }
+        
+        // Guardado manual
+        function manualSave() {
+            showSaveIndicator('saving', 'Guardando...');
+            saveToLocalStorage();
+            showSaveIndicator('saved', '¡Guardado!');
+        }
+        
+        // Backup automático cada 5 minutos
+        function startAutoBackup() {
+            backupInterval = setInterval(() => {
+                saveToLocalStorage();
+                console.log('🔄 Backup automático realizado');
+            }, 300000);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // FUNCIONES DE FOTOS CON INDEXEDDB
+        // ═══════════════════════════════════════════════════════════
+        
+        async function handlePhotoUpload(event, key) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            
+            try {
+                // Obtener fotos existentes
+                const existingPhotos = await getPhotosFromDB(key) || [];
+                const remaining = MAX_PHOTOS_PER_STAND - existingPhotos.length;
+                
+                if (remaining <= 0) {
+                    alert(`❌ Límite alcanzado: máximo ${MAX_PHOTOS_PER_STAND} fotos por stand`);
+                    return;
+                }
+                
+                if (files.length > remaining) {
+                    alert(`⚠️ Solo puedes subir ${remaining} foto(s) más. Seleccionando las primeras ${remaining}.`);
+                }
+                
+                const filesToProcess = files.slice(0, remaining);
+                showSaveIndicator('saving', `Comprimiendo ${filesToProcess.length} foto(s)...`);
+                
+                const compressedPhotos = [];
+                
+                for (const file of filesToProcess) {
+                    try {
+                        const compressed = await compressImage(file);
+                        compressedPhotos.push(compressed);
+                    } catch (error) {
+                        console.error('Error comprimiendo imagen:', error);
+                    }
+                }
+                
+                if (compressedPhotos.length > 0) {
+                    const allPhotos = [...existingPhotos, ...compressedPhotos];
+                    await savePhotoToDB(key, allPhotos);
+                    
+                    // Actualizar UI
+                    renderExhibitorDetails(key);
+                    
+                    showSaveIndicator('saved', `${compressedPhotos.length} foto(s) guardada(s)`);
+                }
+                
+                event.target.value = '';
+                
+            } catch (error) {
+                console.error('Error al subir fotos:', error);
+                showSaveIndicator('error', 'Error al guardar fotos');
+                alert('❌ Error al guardar fotos. Intenta de nuevo.');
+            }
+        }
+        
+        async function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Redimensionar a máximo 800px (antes 1024px)
+                        const maxSize = 800;
+                        if (width > maxSize || height > maxSize) {
+                            if (width > height) {
+                                height = (height / width) * maxSize;
+                                width = maxSize;
+                            } else {
+                                width = (width / height) * maxSize;
+                                height = maxSize;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Calidad 60% (antes 70%)
+                        const compressed = canvas.toDataURL('image/jpeg', 0.60);
+                        
+                        const sizeKB = (compressed.length * 0.75) / 1024;
+                        console.log(`📷 Foto comprimida: ${Math.round(sizeKB)}KB`);
+                        
+                        resolve(compressed);
+                    };
+                    
+                    img.onerror = () => reject(new Error('Error al cargar imagen'));
+                    img.src = e.target.result;
+                };
+                
+                reader.onerror = () => reject(new Error('Error al leer archivo'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        async function deletePhoto(key, photoIndex) {
+            if (!confirm('¿Eliminar esta foto?')) return;
+            
+            try {
+                const photos = await getPhotosFromDB(key) || [];
+                photos.splice(photoIndex, 1);
+                
+                if (photos.length > 0) {
+                    await savePhotoToDB(key, photos);
+                } else {
+                    await deletePhotoFromDB(key);
+                }
+                
+                renderExhibitorDetails(key);
+                showSaveIndicator('saved', 'Foto eliminada');
+            } catch (error) {
+                console.error('Error al eliminar foto:', error);
+                alert('❌ Error al eliminar foto');
+            }
+        }
+        
+        async function downloadPhoto(key, photoIndex) {
+            try {
+                const photos = await getPhotosFromDB(key) || [];
+                const photoData = photos[photoIndex];
+                
+                if (!photoData) {
+                    alert('❌ Foto no encontrada');
+                    return;
+                }
+                
+                // Obtener nombre del expositor
+                let exhibitorName = 'foto';
+                if (key.startsWith('confirmed_')) {
+                    const index = parseInt(key.split('_')[1]);
+                    exhibitorName = exhibitorsData.confirmed[index]?.name || 'foto';
+                } else if (key.startsWith('pending_')) {
+                    const index = parseInt(key.split('_')[1]);
+                    exhibitorName = exhibitorsData.pending[index]?.name || 'foto';
+                }
+                
+                // Limpiar nombre para archivo
+                const cleanName = exhibitorName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                const fileName = `${cleanName}_${photoIndex + 1}_${Date.now()}.jpg`;
+                
+                // Convertir base64 a blob
+                const base64Data = photoData.split(',')[1];
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                
+                // Intentar compartir (mejor para iPhone)
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/jpeg' })] })) {
+                    try {
+                        const file = new File([blob], fileName, { type: 'image/jpeg' });
+                        await navigator.share({
+                            files: [file],
+                            title: 'Guardar foto',
+                            text: `Foto de ${exhibitorName}`
+                        });
+                        showSaveIndicator('saved', '✓ Foto guardada');
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            return; // Usuario canceló
+                        }
+                        // Si falla, continuar con descarga normal
+                    }
+                }
+                
+                // Descarga fallback
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                showSaveIndicator('saved', '✓ Foto descargada');
+                
+            } catch (error) {
+                console.error('Error al descargar foto:', error);
+                alert('❌ Error al descargar foto');
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // FUNCIONES DE UI
+        // ═══════════════════════════════════════════════════════════
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'overview') updateStats();
+            if (tabName === 'route') renderRoute();
+            if (tabName === 'additional') renderCompanies();
+        }
+        
+        function updateStats() {
+            const totalExhibitors = exhibitorsData.confirmed.length + exhibitorsData.pending.length;
+            const visited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+            const notInterested = Object.keys(appState.notInterested).filter(k => appState.notInterested[k]).length;
+            const pending = totalExhibitors - visited - notInterested;
+            const additional = appState.companies.length;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <h3>${totalExhibitors}</h3>
+                    <p>Total Expositores</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h3>${visited}</h3>
+                    <p>Visitados</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <h3>${pending}</h3>
+                    <p>Pendientes</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                    <h3>${additional}</h3>
+                    <p>Adicionales</p>
+                </div>
+            `;
+        }
+        
+        async function renderExhibitors() {
+            const filterPriority = document.getElementById('filterPriority')?.value || 'all';
+            const searchConfirmed = document.getElementById('searchConfirmed')?.value.toLowerCase() || '';
+            const searchPending = document.getElementById('searchPending')?.value.toLowerCase() || '';
+            
+            // Renderizar confirmados
+            let confirmedHTML = '';
+            exhibitorsData.confirmed.forEach((exhibitor, index) => {
+                const key = `confirmed_${index}`;
+                
+                // Filtrar por prioridad y búsqueda
+                if (filterPriority !== 'all' && exhibitor.priority !== filterPriority) return;
+                if (searchConfirmed && !exhibitor.name.toLowerCase().includes(searchConfirmed)) return;
+                
+                const isVisited = appState.visits[key];
+                const isNotInterested = appState.notInterested[key];
+                const hasDetails = appState.details[key];
+                
+                let cardClass = 'exhibitor-card';
+                if (isVisited) cardClass += ' visited';
+                if (isNotInterested) cardClass += ' not-interested';
+                
+                let priorityClass = 'priority';
+                let priorityText = '';
+                if (exhibitor.priority === 'high') { priorityClass += ' high'; priorityText = '🔴 Alta'; }
+                else if (exhibitor.priority === 'medium') { priorityClass += ' medium'; priorityText = '🟡 Media'; }
+                else { priorityClass += ' low'; priorityText = '🔵 Baja'; }
+                
+                confirmedHTML += `
+                    <div class="${cardClass}" id="card_${key}">
+                        <div class="exhibitor-header">
+                            <div class="exhibitor-name">${exhibitor.name}</div>
+                            <span class="${priorityClass}">${priorityText}</span>
+                        </div>
+                        <div class="exhibitor-location">
+                            📍 ${exhibitor.location}
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn ${isVisited ? 'btn-secondary' : 'btn-visited'}" 
+                                    onclick="toggleVisit('${key}')">
+                                ${isVisited ? '✓ Visitado' : '☐ Marcar visitado'}
+                            </button>
+                            <button class="btn ${isNotInterested ? 'btn-secondary' : 'btn-not-interested'}" 
+                                    onclick="toggleNotInterested('${key}')">
+                                ${isNotInterested ? '✓ No interesa' : '✗ No interesa'}
+                            </button>
+                            <button class="btn btn-details" onclick="toggleDetails('${key}')">
+                                ${hasDetails ? '📝 Editar' : '➕ Detalles'}
+                            </button>
+                        </div>
+                        <div id="details_${key}"></div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('confirmedList').innerHTML = confirmedHTML;
+            
+            // Renderizar pendientes
+            let pendingHTML = '';
+            exhibitorsData.pending.forEach((exhibitor, index) => {
+                const key = `pending_${index}`;
+                
+                // Filtrar por búsqueda
+                if (searchPending && !exhibitor.name.toLowerCase().includes(searchPending)) return;
+                
+                const isVisited = appState.visits[key];
+                const isNotInterested = appState.notInterested[key];
+                const hasDetails = appState.details[key];
+                
+                let cardClass = 'exhibitor-card';
+                if (isVisited) cardClass += ' visited';
+                if (isNotInterested) cardClass += ' not-interested';
+                
+                let priorityClass = 'priority';
+                let priorityText = '';
+                if (exhibitor.priority === 'high') { priorityClass += ' high'; priorityText = '🔴 Alta'; }
+                else if (exhibitor.priority === 'medium') { priorityClass += ' medium'; priorityText = '🟡 Media'; }
+                else { priorityClass += ' low'; priorityText = '🔵 Baja'; }
+                
+                pendingHTML += `
+                    <div class="${cardClass}" id="card_${key}">
+                        <div class="exhibitor-header">
+                            <div class="exhibitor-name">${exhibitor.name}</div>
+                            <span class="${priorityClass}">${priorityText}</span>
+                        </div>
+                        <div class="exhibitor-location">
+                            ⏳ Ubicación por confirmar
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn ${isVisited ? 'btn-secondary' : 'btn-visited'}" 
+                                    onclick="toggleVisit('${key}')">
+                                ${isVisited ? '✓ Visitado' : '☐ Marcar visitado'}
+                            </button>
+                            <button class="btn ${isNotInterested ? 'btn-secondary' : 'btn-not-interested'}" 
+                                    onclick="toggleNotInterested('${key}')">
+                                ${isNotInterested ? '✓ No interesa' : '✗ No interesa'}
+                            </button>
+                            <button class="btn btn-details" onclick="toggleDetails('${key}')">
+                                ${hasDetails ? '📝 Editar' : '➕ Detalles'}
+                            </button>
+                        </div>
+                        <div id="details_${key}"></div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('pendingList').innerHTML = pendingHTML;
+        }
+        
+        function toggleVisit(key) {
+            appState.visits[key] = !appState.visits[key];
+            if (appState.visits[key]) {
+                appState.notInterested[key] = false;
+            }
+            
+            // Actualizar solo este elemento
+            const card = document.getElementById(`card_${key}`);
+            if (card) {
+                if (appState.visits[key]) {
+                    card.classList.add('visited');
+                    card.classList.remove('not-interested');
+                } else {
+                    card.classList.remove('visited');
+                }
+                
+                const btn = card.querySelector('.btn-visited, .btn-secondary');
+                if (btn) {
+                    btn.className = appState.visits[key] ? 'btn btn-secondary' : 'btn btn-visited';
+                    btn.textContent = appState.visits[key] ? '✓ Visitado' : '☐ Marcar visitado';
+                }
+            }
+            
+            scheduleSave();
+        }
+        
+        function toggleNotInterested(key) {
+            appState.notInterested[key] = !appState.notInterested[key];
+            if (appState.notInterested[key]) {
+                appState.visits[key] = false;
+            }
+            
+            // Actualizar solo este elemento
+            const card = document.getElementById(`card_${key}`);
+            if (card) {
+                if (appState.notInterested[key]) {
+                    card.classList.add('not-interested');
+                    card.classList.remove('visited');
+                } else {
+                    card.classList.remove('not-interested');
+                }
+                
+                const btn = card.querySelector('.btn-not-interested, .btn-secondary');
+                if (btn) {
+                    btn.className = appState.notInterested[key] ? 'btn btn-secondary' : 'btn btn-not-interested';
+                    btn.textContent = appState.notInterested[key] ? '✓ No interesa' : '✗ No interesa';
+                }
+            }
+            
+            scheduleSave();
+        }
+        
+        function toggleDetails(key) {
+            const detailsDiv = document.getElementById(`details_${key}`);
+            if (detailsDiv.innerHTML) {
+                detailsDiv.innerHTML = '';
+            } else {
+                renderExhibitorDetails(key);
+            }
+        }
+        
+        async function renderExhibitorDetails(key) {
+            const detailsDiv = document.getElementById(`details_${key}`);
+            if (!detailsDiv) return;
+            
+            const details = appState.details[key] || {};
+            const photos = await getPhotosFromDB(key) || [];
+            const photoCount = photos.length;
+            const canAddMore = photoCount < MAX_PHOTOS_PER_STAND;
+            
+            let photosHTML = '';
+            if (photos.length > 0) {
+                photosHTML = '<div class="photo-grid">';
+                photos.forEach((photo, index) => {
+                    photosHTML += `
+                        <div class="photo-item">
+                            <img src="${photo}" alt="Foto ${index + 1}">
+                            <button class="photo-download" onclick="downloadPhoto('${key}', ${index})" title="Guardar en galería">💾</button>
+                            <button class="photo-delete" onclick="deletePhoto('${key}', ${index})" title="Eliminar">×</button>
+                        </div>
+                    `;
+                });
+                photosHTML += '</div>';
+            }
+            
+            detailsDiv.innerHTML = `
+                <div class="details-form">
+                    <div class="form-group">
+                        <label>⭐ Valoración</label>
+                        <div class="rating-stars" onclick="setRating('${key}', event)">
+                            ${[1,2,3,4,5].map(i => `
+                                <span data-rating="${i}">${i <= (details.rating || 0) ? '⭐' : '☆'}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏭 Productos de interés</label>
+                        <input type="text" value="${details.products || ''}" 
+                               oninput="updateDetail('${key}', 'products', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>👤 Nombre de contacto</label>
+                        <input type="text" value="${details.contactName || ''}" 
+                               oninput="updateDetail('${key}', 'contactName', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💼 Cargo</label>
+                        <input type="text" value="${details.contactPosition || ''}" 
+                               oninput="updateDetail('${key}', 'contactPosition', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" value="${details.contactEmail || ''}" 
+                               oninput="updateDetail('${key}', 'contactEmail', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📱 Teléfono</label>
+                        <input type="tel" value="${details.contactPhone || ''}" 
+                               oninput="updateDetail('${key}', 'contactPhone', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🕐 Hora de visita</label>
+                        <input type="time" value="${details.visitTime || ''}" 
+                               oninput="updateDetail('${key}', 'visitTime', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💬 Comentarios</label>
+                        <textarea oninput="updateDetail('${key}', 'comments', this.value)">${details.comments || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group photo-upload">
+                        <label>
+                            📷 Fotos del stand
+                            <span class="photo-counter ${!canAddMore ? 'full' : ''}">${photoCount}/${MAX_PHOTOS_PER_STAND}</span>
+                        </label>
+                        <input type="file" accept="image/*" multiple capture="environment"
+                               ${!canAddMore ? 'disabled' : ''}
+                               onchange="handlePhotoUpload(event, '${key}')">
+                        ${!canAddMore ? '<p style="color: #ef4444; font-size: 12px; margin-top: 5px;">⚠️ Límite alcanzado. Elimina fotos para añadir nuevas.</p>' : ''}
+                    </div>
+                    
+                    ${photosHTML}
+                </div>
+            `;
+        }
+        
+        function updateDetail(key, field, value) {
+            if (!appState.details[key]) {
+                appState.details[key] = {};
+            }
+            appState.details[key][field] = value;
+            scheduleSave();
+        }
+        
+        function setRating(key, event) {
+            if (event.target.dataset.rating) {
+                const rating = parseInt(event.target.dataset.rating);
+                updateDetail(key, 'rating', rating);
+                renderExhibitorDetails(key);
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // EMPRESAS ADICIONALES
+        // ═══════════════════════════════════════════════════════════
+        
+        function addCompany() {
+            const name = document.getElementById('newCompanyName').value.trim();
+            const person = document.getElementById('newCompanyPerson').value.trim();
+            const position = document.getElementById('newCompanyPosition').value.trim();
+            const email = document.getElementById('newCompanyEmail').value.trim();
+            const phone = document.getElementById('newCompanyPhone').value.trim();
+            const comments = document.getElementById('newCompanyComments').value.trim();
+            
+            if (!name || !person) {
+                alert('⚠️ El nombre de empresa y persona son obligatorios');
+                return;
+            }
+            
+            appState.companies.push({
+                name, person, position, email, phone, comments
+            });
+            
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyPerson').value = '';
+            document.getElementById('newCompanyPosition').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('newCompanyPhone').value = '';
+            document.getElementById('newCompanyComments').value = '';
+            
+            saveToLocalStorage();
+            renderCompanies();
+        }
+        
+        function renderCompanies() {
+            let html = '';
+            
+            appState.companies.forEach((company, index) => {
+                html += `
+                    <div class="company-card">
+                        <div class="company-header">
+                            <div class="company-name">${company.name}</div>
+                            <button class="delete-btn" onclick="deleteCompany(${index})">🗑️ Eliminar</button>
+                        </div>
+                        <p><strong>👤 Contacto:</strong> ${company.person}</p>
+                        ${company.position ? `<p><strong>💼 Cargo:</strong> ${company.position}</p>` : ''}
+                        ${company.email ? `<p><strong>📧 Email:</strong> ${company.email}</p>` : ''}
+                        ${company.phone ? `<p><strong>📱 Teléfono:</strong> ${company.phone}</p>` : ''}
+                        ${company.comments ? `<p><strong>💬 Notas:</strong> ${company.comments}</p>` : ''}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('companiesList').innerHTML = html || '<p style="text-align: center; color: #718096;">No hay empresas adicionales</p>';
+        }
+        
+        function deleteCompany(index) {
+            if (confirm('¿Eliminar esta empresa?')) {
+                appState.companies.splice(index, 1);
+                saveToLocalStorage();
+                renderCompanies();
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // RUTA PLANIFICADA
+        // ═══════════════════════════════════════════════════════════
+        
+        function renderRoute() {
+            let html = '';
+            
+            // Agrupar TODOS los confirmados por hall (visitados y pendientes)
+            const hallsData = {};
+            exhibitorsData.confirmed.forEach((exhibitor, index) => {
+                const key = `confirmed_${index}`;
+                const hall = exhibitor.location.split(' Stand')[0];
+                const standNumber = exhibitor.location.split(' Stand ')[1];
+                
+                if (!hallsData[hall]) {
+                    hallsData[hall] = [];
+                }
+                
+                hallsData[hall].push({
+                    ...exhibitor,
+                    key,
+                    standNumber,
+                    visited: appState.visits[key],
+                    notInterested: appState.notInterested[key]
+                });
+            });
+            
+            // Ordenar por stand dentro de cada hall
+            Object.keys(hallsData).forEach(hall => {
+                hallsData[hall].sort((a, b) => {
+                    const standA = a.standNumber || '';
+                    const standB = b.standNumber || '';
+                    return standA.localeCompare(standB);
+                });
+            });
+            
+            // Renderizar ruta optimizada por hall
+            html += '<div class="route-section">';
+            html += '<h3>🗺️ Ruta Optimizada por Hall</h3>';
+            html += '<p style="color: #4a5568; font-size: 13px; margin-bottom: 15px;">Orden sugerido de visita en cada hall</p>';
+            
+            Object.keys(hallsData).sort().forEach(hall => {
+                const exhibitors = hallsData[hall];
+                const visited = exhibitors.filter(e => e.visited).length;
+                const total = exhibitors.length;
+                const pending = total - visited - exhibitors.filter(e => e.notInterested).length;
+                
+                html += `
+                    <h4 style="color: #667eea; margin: 20px 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${hall}</span>
+                        <span style="font-size: 12px; font-weight: normal; color: #718096;">
+                            ${visited}/${total} visitados
+                        </span>
+                    </h4>
+                `;
+                
+                exhibitors.forEach(exhibitor => {
+                    const details = appState.details[exhibitor.key] || {};
+                    
+                    let itemClass = 'route-item';
+                    let statusIcon = '☐';
+                    let borderColor = '#cbd5e0';
+                    
+                    if (exhibitor.visited) {
+                        statusIcon = '✓';
+                        borderColor = '#10b981';
+                        itemClass += ' visited';
+                    } else if (exhibitor.notInterested) {
+                        statusIcon = '✗';
+                        borderColor = '#ef4444';
+                    } else {
+                        borderColor = '#667eea';
+                    }
+                    
+                    let priorityBadge = '';
+                    if (exhibitor.priority === 'high') {
+                        priorityBadge = '<span style="background: #fecaca; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔴 ALTA</span>';
+                    } else if (exhibitor.priority === 'medium') {
+                        priorityBadge = '<span style="background: #fed7aa; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🟡 MEDIA</span>';
+                    } else {
+                        priorityBadge = '<span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔵 BAJA</span>';
+                    }
+                    
+                    html += `
+                        <div class="route-item" style="border-left-color: ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                                <strong style="flex: 1;">${statusIcon} ${exhibitor.name}</strong>
+                                ${priorityBadge}
+                            </div>
+                            <p style="color: #4a5568; font-size: 13px;">📍 ${exhibitor.location}</p>
+                            ${exhibitor.visited && details.visitTime ? `<p style="color: #4a5568; font-size: 12px;">🕐 Visitado: ${details.visitTime}</p>` : ''}
+                            ${exhibitor.visited && details.rating ? `<p style="color: #4a5568; font-size: 12px;">⭐ Valoración: ${details.rating}/5</p>` : ''}
+                        </div>
+                    `;
+                });
+            });
+            
+            html += '</div>';
+            
+            // Expositores pendientes (sin ubicación confirmada)
+            const pendingToVisit = [];
+            exhibitorsData.pending.forEach((exhibitor, index) => {
+                const key = `pending_${index}`;
+                if (!appState.notInterested[key]) {
+                    pendingToVisit.push({
+                        ...exhibitor,
+                        key,
+                        visited: appState.visits[key]
+                    });
+                }
+            });
+            
+            if (pendingToVisit.length > 0) {
+                const visitedCount = pendingToVisit.filter(e => e.visited).length;
+                
+                html += '<div class="route-section" style="margin-top: 30px;">';
+                html += `<h3 style="color: #f59e0b;">⏳ Expositores Pendientes de Ubicación (${visitedCount}/${pendingToVisit.length})</h3>`;
+                html += '<p style="color: #4a5568; font-size: 13px; margin-bottom: 15px;">Ubicaciones por confirmar</p>';
+                
+                // Ordenar por prioridad
+                pendingToVisit.sort((a, b) => {
+                    const priorityOrder = { high: 0, medium: 1, low: 2 };
+                    return priorityOrder[a.priority] - priorityOrder[b.priority];
+                });
+                
+                pendingToVisit.forEach(exhibitor => {
+                    const details = appState.details[exhibitor.key] || {};
+                    let statusIcon = exhibitor.visited ? '✓' : '☐';
+                    let borderColor = exhibitor.visited ? '#10b981' : '#f59e0b';
+                    
+                    let priorityBadge = '';
+                    if (exhibitor.priority === 'high') {
+                        priorityBadge = '<span style="background: #fecaca; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔴 ALTA</span>';
+                    } else if (exhibitor.priority === 'medium') {
+                        priorityBadge = '<span style="background: #fed7aa; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🟡 MEDIA</span>';
+                    } else {
+                        priorityBadge = '<span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔵 BAJA</span>';
+                    }
+                    
+                    html += `
+                        <div class="route-item" style="border-left-color: ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                                <strong style="flex: 1;">${statusIcon} ${exhibitor.name}</strong>
+                                ${priorityBadge}
+                            </div>
+                            <p style="color: #4a5568; font-size: 13px;">⏳ Ubicación por confirmar</p>
+                            ${exhibitor.visited && details.visitTime ? `<p style="color: #4a5568; font-size: 12px;">🕐 Visitado: ${details.visitTime}</p>` : ''}
+                            ${exhibitor.visited && details.rating ? `<p style="color: #4a5568; font-size: 12px;">⭐ Valoración: ${details.rating}/5</p>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            document.getElementById('routeContent').innerHTML = html;
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // EXPORTACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        async function exportJSON() {
+            try {
+                // Recopilar todas las fotos de IndexedDB
+                const allPhotos = {};
+                for (const key in appState.details) {
+                    const photos = await getPhotosFromDB(key);
+                    if (photos && photos.length > 0) {
+                        allPhotos[key] = photos;
+                    }
+                }
+                
+                const exportData = {
+                    version: '2.0',
+                    exportDate: new Date().toISOString(),
+                    appState: appState,
+                    photos: allPhotos,
+                    exhibitorsData: exhibitorsData
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_automechanika_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert('✅ Backup exportado con fotos incluidas');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al exportar: ' + error.message);
+            }
+        }
+        
+        async function exportDailyReport() {
+            try {
+                const date = new Date().toLocaleDateString('es-ES');
+                
+                let html = `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px; }
+                        h1 { color: #2d3748; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+                        h2 { color: #667eea; margin-top: 30px; }
+                        .company { margin: 20px 0; padding: 15px; border-left: 4px solid #10b981; background: #f7fafc; }
+                        .company h3 { margin: 0 0 10px 0; color: #1a202c; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+                        td:first-child { font-weight: bold; width: 150px; color: #4a5568; }
+                        .photo { max-width: 300px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📝 Informe Diario - Automechanika Shanghai 2025</h1>
+                    <p><strong>Empresa:</strong> Lizarte</p>
+                    <p><strong>Fecha:</strong> ${date}</p>
+                    <p><strong>Generado:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                `;
+                
+                // Expositores visitados hoy
+                const visitedToday = [];
+                
+                for (let i = 0; i < exhibitorsData.confirmed.length; i++) {
+                    const key = `confirmed_${i}`;
+                    if (appState.visits[key]) {
+                        const exhibitor = exhibitorsData.confirmed[i];
+                        const details = appState.details[key] || {};
+                        const photos = await getPhotosFromDB(key) || [];
+                        visitedToday.push({ exhibitor, details, photos, key });
+                    }
+                }
+                
+                for (let i = 0; i < exhibitorsData.pending.length; i++) {
+                    const key = `pending_${i}`;
+                    if (appState.visits[key]) {
+                        const exhibitor = exhibitorsData.pending[i];
+                        const details = appState.details[key] || {};
+                        const photos = await getPhotosFromDB(key) || [];
+                        visitedToday.push({ exhibitor, details, photos, key });
+                    }
+                }
+                
+                if (visitedToday.length > 0) {
+                    html += `<h2>✅ Expositores Visitados (${visitedToday.length})</h2>`;
+                    
+                    visitedToday.forEach(({ exhibitor, details, photos }) => {
+                        html += `
+                            <div class="company">
+                                <h3>${exhibitor.name}</h3>
+                                <table>
+                                    ${exhibitor.location ? `<tr><td>📍 Ubicación</td><td>${exhibitor.location}</td></tr>` : ''}
+                                    ${exhibitor.priority ? `<tr><td>⚡ Prioridad</td><td>${exhibitor.priority === 'high' ? '🔴 Alta' : exhibitor.priority === 'medium' ? '🟡 Media' : '🔵 Baja'}</td></tr>` : ''}
+                                    ${details.rating ? `<tr><td>⭐ Valoración</td><td>${'⭐'.repeat(details.rating)} (${details.rating}/5)</td></tr>` : ''}
+                                    ${details.products ? `<tr><td>🏭 Productos</td><td>${details.products}</td></tr>` : ''}
+                                    ${details.contactName ? `<tr><td>👤 Contacto</td><td>${details.contactName}</td></tr>` : ''}
+                                    ${details.contactPosition ? `<tr><td>💼 Cargo</td><td>${details.contactPosition}</td></tr>` : ''}
+                                    ${details.contactEmail ? `<tr><td>📧 Email</td><td>${details.contactEmail}</td></tr>` : ''}
+                                    ${details.contactPhone ? `<tr><td>📱 Teléfono</td><td>${details.contactPhone}</td></tr>` : ''}
+                                    ${details.visitTime ? `<tr><td>🕐 Hora visita</td><td>${details.visitTime}</td></tr>` : ''}
+                                </table>
+                                ${details.comments ? `<p><strong>💬 Notas:</strong> ${details.comments}</p>` : ''}
+                                ${photos.length > 0 ? photos.map((photo, i) => `<img src="${photo}" class="photo" alt="Foto ${i+1}">`).join('') : ''}
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Empresas adicionales
+                if (appState.companies.length > 0) {
+                    html += `<h2>➕ Empresas Adicionales (${appState.companies.length})</h2>`;
+                    appState.companies.forEach(company => {
+                        html += `
+                            <div class="company">
+                                <h3>${company.name}</h3>
+                                <table>
+                                    <tr><td>👤 Contacto</td><td>${company.person}</td></tr>
+                                    ${company.position ? `<tr><td>💼 Cargo</td><td>${company.position}</td></tr>` : ''}
+                                    ${company.email ? `<tr><td>📧 Email</td><td>${company.email}</td></tr>` : ''}
+                                    ${company.phone ? `<tr><td>📱 Teléfono</td><td>${company.phone}</td></tr>` : ''}
+                                </table>
+                                ${company.comments ? `<p><strong>💬 Notas:</strong> ${company.comments}</p>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+                
+                html += `
+                    <hr style="margin-top: 40px; border: none; border-top: 2px solid #e2e8f0;">
+                    <p style="text-align: center; color: #718096; font-size: 12px;">
+                        Generado: ${new Date().toLocaleString('es-ES')}<br>
+                        Automechanika Shanghai 2025 - Lizarte
+                    </p>
+                </body>
+                </html>`;
+                
+                const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+                const fileName = `informe_diario_${new Date().toISOString().split('T')[0]}.doc`;
+                
+                // Compartir si es posible
+                if (navigator.share) {
+                    try {
+                        const file = new File([blob], fileName, { type: 'application/msword' });
+                        await navigator.share({
+                            files: [file],
+                            title: 'Informe Diario Automechanika',
+                            text: `Informe del ${date} con fotos incluidas`
+                        });
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                    }
+                }
+                
+                // Descarga fallback
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                alert('✅ Informe profesional con fotos generado');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al generar informe: ' + error.message);
+            }
+        }
+        
+        async function exportCompleteWord() {
+            alert('📑 Generando informe completo (puede tardar)...');
+            
+            const date = new Date().toLocaleDateString('es-ES');
+            const totalVisited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+            const totalExhibitors = exhibitorsData.confirmed.length + exhibitorsData.pending.length;
+            
+            let content = `INFORME COMPLETO - AUTOMECHANIKA SHANGHAI 2025\n`;
+            content += `Lizarte\n`;
+            content += `Fecha: ${date}\n\n`;
+            content += `════════════════════════════════════════\n\n`;
+            
+            content += `RESUMEN EJECUTIVO\n\n`;
+            content += `Total de expositores: ${totalExhibitors}\n`;
+            content += `Expositores visitados: ${totalVisited}\n`;
+            content += `Porcentaje completado: ${Math.round((totalVisited / totalExhibitors) * 100)}%\n`;
+            content += `Empresas adicionales: ${appState.companies.length}\n\n`;
+            content += `════════════════════════════════════════\n\n`;
+            
+            content += `RUTA CONFIRMADA - EXPOSITORES VISITADOS\n\n`;
+            
+            for (let i = 0; i < exhibitorsData.confirmed.length; i++) {
+                const exhibitor = exhibitorsData.confirmed[i];
+                const key = `confirmed_${i}`;
+                if (appState.visits[key]) {
+                    const details = appState.details[key] || {};
+                    const photos = await getPhotosFromDB(key) || [];
+                    
+                    content += `\n${exhibitor.name}\n`;
+                    content += `${'-'.repeat(exhibitor.name.length)}\n`;
+                    content += `Ubicación: ${exhibitor.location}\n`;
+                    content += `Prioridad: ${exhibitor.priority}\n`;
+                    if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)} (${details.rating}/5)\n`;
+                    if (details.products) content += `Productos de interés: ${details.products}\n`;
+                    if (details.contactName) {
+                        content += `\nCONTACTO:\n`;
+                        content += `Nombre: ${details.contactName}\n`;
+                        if (details.contactPosition) content += `Cargo: ${details.contactPosition}\n`;
+                        if (details.contactEmail) content += `Email: ${details.contactEmail}\n`;
+                        if (details.contactPhone) content += `Teléfono: ${details.contactPhone}\n`;
+                    }
+                    if (details.visitTime) content += `Hora de visita: ${details.visitTime}\n`;
+                    if (details.comments) content += `\nComentarios:\n${details.comments}\n`;
+                    if (photos.length > 0) {
+                        content += `Fotos adjuntas: ${photos.length}\n`;
+                    }
+                    content += `\n`;
+                }
+            }
+            
+            content += `\n════════════════════════════════════════\n\n`;
+            content += `RUTA PENDIENTE - EXPOSITORES VISITADOS\n\n`;
+            
+            for (let i = 0; i < exhibitorsData.pending.length; i++) {
+                const exhibitor = exhibitorsData.pending[i];
+                const key = `pending_${i}`;
+                if (appState.visits[key]) {
+                    const details = appState.details[key] || {};
+                    const photos = await getPhotosFromDB(key) || [];
+                    
+                    content += `\n${exhibitor.name}\n`;
+                    content += `${'-'.repeat(exhibitor.name.length)}\n`;
+                    content += `Prioridad: ${exhibitor.priority}\n`;
+                    if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)} (${details.rating}/5)\n`;
+                    if (details.products) content += `Productos de interés: ${details.products}\n`;
+                    if (details.contactName) {
+                        content += `\nCONTACTO:\n`;
+                        content += `Nombre: ${details.contactName}\n`;
+                        if (details.contactPosition) content += `Cargo: ${details.contactPosition}\n`;
+                        if (details.contactEmail) content += `Email: ${details.contactEmail}\n`;
+                        if (details.contactPhone) content += `Teléfono: ${details.contactPhone}\n`;
+                    }
+                    if (details.visitTime) content += `Hora de visita: ${details.visitTime}\n`;
+                    if (details.comments) content += `\nComentarios:\n${details.comments}\n`;
+                    if (photos.length > 0) {
+                        content += `Fotos adjuntas: ${photos.length}\n`;
+                    }
+                    content += `\n`;
+                }
+            }
+            
+            if (appState.companies.length > 0) {
+                content += `\n════════════════════════════════════════\n\n`;
+                content += `EMPRESAS ADICIONALES A VISITAR\n\n`;
+                
+                appState.companies.forEach(company => {
+                    content += `\n${company.name}\n`;
+                    content += `${'-'.repeat(company.name.length)}\n`;
+                    content += `Contacto: ${company.person}\n`;
+                    if (company.position) content += `Cargo: ${company.position}\n`;
+                    if (company.email) content += `Email: ${company.email}\n`;
+                    if (company.phone) content += `Teléfono: ${company.phone}\n`;
+                    if (company.comments) content += `Notas: ${company.comments}\n`;
+                    content += `\n`;
+                });
+            }
+            
+            content += `\n════════════════════════════════════════\n`;
+            content += `Fin del informe\n`;
+            content += `Generado: ${new Date().toLocaleString('es-ES')}\n`;
+            
+            // Guardar contenido globalmente
+            window.lastGeneratedReport = content;
+            
+            // Intentar Web Share API primero (mejor para iOS)
+            if (navigator.share) {
+                try {
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const file = new File([blob], `informe_automechanika_${new Date().toISOString().split('T')[0]}.txt`, { type: 'text/plain' });
+                    
+                    await navigator.share({
+                        files: [file],
+                        title: 'Informe Completo Automechanika',
+                        text: 'Informe completo de visitas'
+                    });
+                    
+                    alert('✅ Informe compartido');
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    console.log('Share API falló:', err);
+                }
+            }
+            
+            // Fallback: descarga
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `informe_automechanika_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            
+            alert('✅ Informe generado. Si no puedes abrirlo, usa el botón "📋 Copiar"');
+        }
+        
+        // Copiar informe al portapapeles
+        async function copyReportToClipboard() {
+            try {
+                showSaveIndicator('saving', 'Generando informe...');
+                
+                if (!window.lastGeneratedReport) {
+                    await exportCompleteWord();
+                }
+                
+                await navigator.clipboard.writeText(window.lastGeneratedReport);
+                
+                showSaveIndicator('saved', '✓ Copiado!');
+                alert('✅ Informe copiado!\n\n1. Abre OneNote\n2. Crear página nueva\n3. Mantener presionado y "Pegar"');
+            } catch (error) {
+                console.error('Error:', error);
+                showReportInModal();
+            }
+        }
+        
+        // Mostrar informe en modal
+        function showReportInModal() {
+            if (!window.lastGeneratedReport) {
+                exportCompleteWord();
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.9); z-index: 10000;
+                display: flex; flex-direction: column; padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <h2 style="color: white; margin: 0;">📄 Informe</h2>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px;">
+                        ✕ Cerrar
+                    </button>
+                </div>
+                <textarea readonly style="flex: 1; width: 100%; padding: 15px; font-family: monospace; font-size: 13px; border-radius: 8px;">${window.lastGeneratedReport}</textarea>
+                <button onclick="navigator.clipboard.writeText(window.lastGeneratedReport).then(() => alert('✅ Copiado')).catch(() => alert('❌ Error'))" 
+                        style="margin-top: 15px; background: #10b981; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                    📋 Copiar Todo
+                </button>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Importación
+        async function importFromJSON() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('⚠️ Selecciona un archivo JSON');
+                return;
+            }
+            
+            if (!confirm('⚠️ Esto sobrescribirá todos los datos. ¿Continuar?')) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    appState = imported.appState;
+                    
+                    // Importar fotos a IndexedDB si existen
+                    if (imported.photos) {
+                        for (const key in imported.photos) {
+                            await savePhotoToDB(key, imported.photos[key]);
+                        }
+                        console.log('✅ Fotos importadas a IndexedDB');
+                    }
+                    
+                    saveToLocalStorage();
+                    renderExhibitors();
+                    renderCompanies();
+                    renderRoute();
+                    updateStats();
+                    alert('✅ Datos importados correctamente');
+                    switchTab('overview');
+                } catch (error) {
+                    alert('❌ Error: archivo no válido');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        async function init() {
+            try {
+                await initPhotoDB();
+                loadFromLocalStorage();
+                await migrateOldPhotos();
+                renderExhibitors();
+                updateStats();
+                startAutoBackup();
+                
+                console.log('✅ App inicializada');
+                console.log(`📊 Total expositores: ${exhibitorsData.confirmed.length + exhibitorsData.pending.length}`);
+                console.log(`📷 Límite por stand: ${MAX_PHOTOS_PER_STAND} fotos`);
+                console.log(`💾 Almacenamiento: ${STORAGE_LIMIT_MB}MB`);
+            } catch (error) {
+                console.error('❌ Error en inicialización:', error);
+                alert('⚠️ Error al inicializar. Por favor, recarga la página.');
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
