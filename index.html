@@ -1,0 +1,3577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Automechanika 2025">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23667eea' width='100' height='100'/><text y='70' x='50' text-anchor='middle' font-size='60' fill='white'>🏭</text></svg>">
+    <title>Automechanika Shanghai 2025 - Lizarte</title>
+    
+    <!--
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  VERSIÓN 3.3 - ZIP Fotos ARREGLADO - 29 Nov 2025            ║
+    ║  Todas las fotos en un solo archivo - BUG FIXED             ║
+    ╚══════════════════════════════════════════════════════════════╝
+    
+    🆕 VERSIÓN 3.3 - BUG FIX CRÍTICO:
+    
+    ✅ ARREGLADO: Template string que rompía la inicialización
+       - Error en línea 3036 que impedía cargar la app
+       - Ahora la app carga correctamente con TODOS los datos
+       - Botón ZIP funciona perfectamente
+    
+    🆕 VERSIÓN 3.2 - FUNCIONALIDAD ZIP:
+    
+    ✅ BOTÓN ZIP - DESCARGAR TODAS LAS FOTOS
+       - Nuevo botón rojo "📦 Descargar ZIP con TODAS las Fotos"
+       - Crea archivo .zip con todas las fotos de reuniones
+       - Incluye archivo INDICE.txt con mapeo foto → reunión
+       - 1 solo click para descargar 33 fotos (o las que sean)
+       - Compatible con iPhone (Web Share API)
+       - Nombres de archivo: reunion_empresa_foto1.jpg
+    
+    🆕 VERSIÓN 3.1 - CORRECCIONES:
+    
+    ✅ 1. EXPORTACIÓN JSON MEJORADA
+       - Ahora incluye fotos de reuniones (meetingPhotos)
+       - Backup completo con todas las fotos
+       - Web Share API para mejor compatibilidad iOS
+    
+    ✅ 2. NUEVO BOTÓN: DESCARGAR FOTOS DE REUNIONES
+       - Botón naranja "📷 Descargar Fotos de Reuniones"
+       - Descarga cada foto individualmente
+       - Compatible con iPhone (Web Share API)
+    
+    🆕 VERSIÓN 3.0 - FUNCIONALIDADES:
+    
+    ✅ 1. PESTAÑA REUNIONES
+       - Crear reuniones con: Empresa, Persona, Producto, Stand, Hora
+       - Máximo 100 reuniones
+       - Listado ordenado por hora
+       - Sistema completo de fotos (máx 3 por reunión)
+    
+    ✅ 2. REUNIONES EN CONFIRMADOS
+       - Fondo amarillo distintivo para reuniones con stand
+       - Hora destacada en grande (22px, naranja)
+       - Badge "🤝 REUNIÓN"
+       - Integradas automáticamente en el listado
+    
+    ✅ 3. ADICIONALES EDITABLE
+       - Botón "✏️ Editar Notas" para cada empresa
+       - Textarea editable con Guardar/Cancelar
+       - Notas claramente visibles
+    
+    ✅ 4. INFORME MEJORADO
+       - Nueva sección: "🤝 REUNIONES PROGRAMADAS"
+       - Muestra todas las reuniones con detalles
+       - Ordenadas por hora con fotos incluidas
+    
+    ✅ 5. ESTADÍSTICAS ACTUALIZADAS
+       - Contador de reuniones en resumen
+       - Se actualiza automáticamente
+    
+    📊 VERSIÓN 2.0 - CARACTERÍSTICAS BASE:
+    - IndexedDB para fotos (50MB)
+    - Compresión optimizada (60KB/foto)
+    - Límite de 3 fotos por stand/reunión
+    - Sistema híbrido localStorage + IndexedDB
+    - Descarga de fotos a galería iPhone
+    -->
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #9333ea 0%, #c026d3 100%);
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: 80px;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #c026d3 0%, #9333ea 50%, #6b21a8 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+        
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .lizarte-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        
+        .header .made-by {
+            opacity: 0.6;
+            font-size: 11px;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+        
+        .backup-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+        
+        .header-save-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+        }
+        
+        .header-save-btn:active {
+            transform: scale(0.95);
+            background: #059669;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .save-indicator.saving { background: #f59e0b; }
+        .save-indicator.saved { background: #10b981; }
+        .save-indicator.error { background: #ef4444; }
+        
+        .save-indicator .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 110px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #c026d3;
+            border-bottom: 3px solid #c026d3;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-card h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .exhibitor-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #cbd5e0;
+            transition: all 0.3s;
+        }
+        
+        .exhibitor-card:active {
+            transform: scale(0.98);
+        }
+        
+        .exhibitor-card.visited {
+            background: #d1fae5;
+            border-left-color: #10b981;
+        }
+        
+        .exhibitor-card.not-interested {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+        
+        .exhibitor-card.meeting {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            border-left-width: 5px;
+        }
+        
+        .meeting-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        
+        .meeting-time {
+            font-size: 22px;
+            font-weight: 700;
+            color: #f59e0b;
+            margin: 8px 0;
+        }
+        
+        .meeting-person {
+            color: #92400e;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+        
+        .meeting-product {
+            color: #7c3aed;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+        
+        .meeting-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #f59e0b;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        .exhibitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .exhibitor-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+            flex: 1;
+        }
+        
+        .priority {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .priority.high { background: #fecaca; color: #991b1b; }
+        .priority.medium { background: #fed7aa; color: #92400e; }
+        .priority.low { background: #dbeafe; color: #1e40af; }
+        
+        .exhibitor-location {
+            color: #4a5568;
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-visited {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-not-interested {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-details {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1a202c;
+        }
+        
+        .details-form {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        
+        .rating-stars span {
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .rating-stars span:hover {
+            transform: scale(1.2);
+        }
+        
+        .photo-upload {
+            margin-top: 15px;
+        }
+        
+        .photo-counter {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .photo-counter.full {
+            background: #ef4444;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .photo-download {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+        }
+        
+        .company-form {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .company-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .route-section {
+            margin-bottom: 25px;
+        }
+        
+        .route-section h3 {
+            font-size: 18px;
+            color: #2d3748;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .route-item {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #10b981;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        
+        .route-item.visited {
+            background: #f0fdf4;
+        }
+        
+        .route-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .route-item strong {
+            color: #1a202c;
+            font-size: 14px;
+        }
+        
+        .route-item p {
+            color: #4a5568;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        
+        .export-buttons {
+            display: grid;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .export-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .import-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff5f5;
+            border-radius: 12px;
+            border: 2px dashed #fc8181;
+        }
+        
+        .filter-bar {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-bar select,
+        .filter-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 { font-size: 20px; }
+            .lizarte-logo { width: 35px; height: 35px; }
+            .header-title { gap: 10px; }
+            .exhibitor-card { padding: 12px; }
+            .btn { font-size: 12px; padding: 8px; }
+        }
+    </style>
+    
+    <!-- JSZip para descargar fotos en ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <!-- Logo de Lizarte - Símbolo circular -->
+                <img src="data:image/webp;base64,UklGRgZgAABXRUJQVlA4WAoAAAAgAAAAzwcAOwIASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdC
+IFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAA
+AADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlk
+ZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAA
+ABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAA
+AAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAA
+AABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEA
+AAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAA
+ACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggGF4AAJBPAp0BKtAHPAI+
+USiRRqOmoiMiMgk40AoJZ274MsjdaN7bxuR6xl+e+BP9Z2XmMu8/4n9pP7r+1PzZ8K9X/gH7j/cf
+7d/bf2e53axvMD8a/S/93/fv9L/8P8T8zP+F6xP43/qv/L7g38J/n3+7/v3+g/83+c/////+rf/O
+/4D4A/un6pv2I/9P+U/f/5n/8b+03us/wX+x/2f+A/2///+gH+kf5z/0e3x6jnoCfzz/af+v1yv3
+I+Ev+qf7b9q/918jf9I/x//r/P/5AP/b6gH/l62/sR/gf7b7Avjv63/cP7h+2X94/eT4f9B/pf9p
+/bPeUdSP4z9rf0X9l/bz+2/uZ97v6D/leFfz3/1/UF/IP5d/pP7j+4f5lcksAD65/8L+5fuz7xPy
+X/T9EftR/1fcB/of9Q/1X+C/JP22vBh9R/4PuBfzj+0f87+6/6D9lfpy/sv/L/pf87+7HuM+pf/P
+/p/gT/oP92/6P9+9t7//+4j93v//7tP7miekxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJ
+JjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMa
+VRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqL
+ZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqKR/cxiX3dncqShaeH5eY7eYn2Uu3
+4qySmcDh2tajAPag1cDADbUUqi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2
+YBJMaVRbMAkmMg8ufI//+bNn3FaJ2xYi5l//1hSUKr9XhvsEhYNXct2IqBrxtqKVRbMAkmNKotmA
+STGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotl/3j+7sihIYS8t7Nv7efNrD980Q7r
+eLBtBL3MzXeisjdzitI4CZV2I0QZZxo/eEbdqhZcQNAs3R+r/8EkxpVFswCSY0qi2YBJMaVRbMAk
+mNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qfBEmEjDn5VG/aOiORXV3Ef0pNswCT6XOJO8HNDcj
+9w+i/VLfEFThUU/LieHKSR21FKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKo
+tmASTGlUWobmSO96ObrWcfQkOeaHHkKFHNSVK/r7HT24akrZn6XJ/jbpQNOmiZMZi6hULdntVjaW
+YQs6X6U9ElBU/Awyxjw/Yf8/oKi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi
+2YBJMaVRbJkCqlzS2gAJfxLI39QxNEALi5jT/4TrsdvwPf1nTASNdyrlLn7yarPwIdJ2+aQNvbvZ
+iXiwqcHdCXfm+apG7lfTYARo0jsYYZ7CIPe35dWF012of99kW9ZOeeO9UmNKotmASTGlUWzAJJjS
+qLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGQ95wZosytJMMyuhlItBghnyCZMjEVqLjzpFr
+mhkkOtFcji11qqkUv19pVB3RCsuc6BiyFp8EotIfU+dC4vsseV/zZw6Tt8Wj2ft7irk7jrSqLZgE
+kxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkwhqQdcmnNqYl3f8hKcWuZBOVeW
+ZwrkoBgcYZZHNNNA+gmnhO/1Dp+WrLcV9beekPnGXsQn6NzGgOwS6d1ob0fE1liALsthZF5CTQ+C
+SYUulQoaboeDjgNA8Eh/69f1qQM8SRJrBuzJwB10dD5GWoTed9VSSMcOZrFDro6HhEZ8tVSSAm7W
+pBG5GVA6NhOxjFXyRUMPQeNMc2JxeOXR0PkZakEbDCJwFzmS2RsG34b8jLUJZsNRTlLF5gEhhB6m
+4uO4jeST4ntzhGtbAushCYCaKpsWOKYia2D4yjJLk060qfolQkiNX+jkZH+Sf8PYyPL5Zb0wjQrF
+gbOvoaKeTYaX0fGZE/TGXsdaU4d86rDUjAJEo05y/OXEkxpTtiNnblw3w1E/gfz59JEkwyryHcda
+QNGYFndfch7K/oKi2SysOaTGlO2I209M62/0gsuwI4LfE4vi9iJs7/uLxCOLfoPP+ESGWXqNWPl2
+oD3jElhJjPb4fF6d4w7/wvpmlP3u1M+FxvgQKaML0CozZBSp8oRyLoS8BJJek3i7lngyV1qQRs6A
+0eXo+K2QgT0QSlOZtKcjCjNeV8C0sKXoAUVIIPMTrj79ccjPrBUBu89z5FaO/Fa9s++RSUxYYS9J
+4PJG/j76gHB7BjlzmgN5Tjt9RYC/U+TLULXQsfQTVP6kMLxioajklIRvHbqW+2h3UXUK7dgqOTM+
+2/0YJDzmxVBF+sdXoixy2HrwhdCdsZyYnc+3gdMaJeLNwOp+Qq0qfKEci6EvASSXpN4vASTCgsn7
+TWuHtIc19+R4yAF/gQuN4EaEf1Ev1H0Yl3LYyqeMbdvJw9O6WpAV21qe/pp7d+/W7MZxp7MAkmEa
+9DLAImpQIrBDh5Q8HcWZfzg0z9yk4hyzfZIBpMZCkHqjp34hjTkTQ8qzArI3WiJWxeNbO0CRKxHO
+iFKopU+UI5F0JeAkkvSbxeAkke3Ux6iuSw8+QIbGD0E5dyCJ0T0A7sCJoTQ7Mf+C5zfnqgVFpG/o
+RJWnSNOV17bfavNCEzO2HMF1K/oKi2XhcFdr4ZbfBhM+QcnM363M8Z0ZyvFp2asSiz86rsH7L/bo
+pCGcFF/r6KtuMZM1h6KcfdlPOgHtWug3gqb9lNy2wlUWo0Z7C9hzSYyqRehzSYyfbzKdCed5eDSX
+NaTbNq7hgk6J0DqAKfzhUqzTNGyjbOdu8nNCrvh39IvLRgDghgNzOY2Sy3rBjFRbMAkMxfYpyBUN
+LyR3BQ64+vX2y7L/bkt7Af8mOBV2/kKwNRuKT/a06ROXiCdN3GscN6t1VybOaizbJDFHCvOX/BIl
+GnOX/A/qTZxh7Ylw3hCNSmE6VAPlBS54QLISYp2ZAbBBxrXH7Odu8nNCrbGsqYO9yWC/wn7zkJ0p
+dKh++YtIS7jUrgpMtWKBA/oOibci2XhEpRIn7LL32XAE6aVHb4jwCb6FvjF8hT+x8Tx51BLNKfbn
+5Qy0pw9uGUiH/tUVNf22tigC+1Cw0SUru/TvGg1PMcNl5Sz0Vcnp1pTtiMnp1lk2Sp+hw/NkJKJf
+Psv+cHy/JzRtYqAO9SStPdw2qCu+2sz2nIM9EVl7EMSNXu+R0oj9b+lOzbD98xaQl4CSYWaK34i2
+RR8CpEnGXW9SAkXZgEkxpVFswO/u8Gg/4g3kf/7m/xf+tf/gEfW7oEA586/daqJt2ZgD+0GZWOdJ
+zu/ebOdJzXMwNGxDc1zJZiXKWCadZZuvDmQQthMxkJwBY3TldoRkbqkDN/tGptSVy+CHkjB4c7oz
+OhgydmqWXoQo3M5jZLLeIFiqucer5Fzu9mAPnbfsX53IiYKVRbMAkmM1pB3/qbMPhj/7IzTn3kz6
+lbzqtuikWa0Ql/I/vN2Lq6Y/MjxjNAJEAJIVeaLneMnp0ymJu2vGd+f+2KNqpkFPQU+fRmmAhiH+
+2HUA/pOi1G8lP+8mHTgp27yc0G3CX7GmX+wElKQTsNKn46cwZzGyWW9YMYrIR3jZukeBIuLJjkLA
+tvEosOsl5nJQB3Fet+vmMNfyfCr6mHeNpe1mDabpJvhcrEp16c+OKwGrPH/OwwduSdnzTqSd/SLV
+x7sZBQS/0jrR/5JwBHKdtRKpF6HNEOC1pgHWTIaCsEb1RbLzFQRsPlM5wOujNF2p6a69iUJl0x/8
+qHe2PzgD3r7YRR13xpTs2w/fMWkJd0IUcn+gqLTzE94cVaXtyV3sCB5tQ4cuXdyXM/jzelyyGv7t
+iRU7NquvDvGWEKlcOKrzhX7N5yV7nGDyR2S/6/rQR2ZUJpl2yJqFIb2z/hmMcLPaTGTOJBVvbEba
+fKYnbD5UXSTrt5MW0iIRb+CREICOAPD4RLo6HhzRanl5EgQ/9ccjPHehJ92um8nSuJSy8kXEiTON
+CWO6yqRLBFxJMaVRRg9qzvxaPO03BX6ak+KPq3rQHYbK3CTo8lg7r8qO3OUUpozSTX7G1ZDQCXUD
+ytIfI+2/Ud/Ile9bm6BDEHoyBvW3qsje7UVCExY7jSqKUuF9XFlxJMMpidrzQ/dZ4DflsaHZYjdk
+xpTfKjDHSpEvYjFbJjpQ6ACMK4xgmDb4cxSJBbfBoUwGKNv9USfgVBOzbD98xaQl3QhRyf6Cotnn
+yBv/VvP1nWarv/1DdclByhlH1JLBMflodAPE+eCw2GntPyy9gNYhHLDVQNV/zqZXFuAvNqhWXcfA
+SYNo8hpohBncYhxlORmjzOVeTIpU+UI5Fz6O4J5NhpJlqKQHRPpYZR+sM/Ncyii9T+dCZakEbOrl
+ao7d9FAOWu3ABUUsHcTfGONjA6rWaEBebfsuYV/tRTjf1o43swOQo3M5jZLLd+ufslHWZz5MtRNd
+n8O+CSYR14UBBictbC9G+tgw1gfgY4kfmipu/Rij72QJpFN/DRJ1x7Q0KJomWJlbOlXG+o+V6Bnn
+G3r2aLfg4EWZo1BaqLYRn9/tDYN0wpIuVaBWAEkaVRSlwvq6ASSXnkXNlfDmk1o8ik+0Kva+5Icn
+sRiRInbwU3uTAd5WHLZptsyNOUvCz4xBnJuke5gRRq42DGBMrLefSc7xtCAtKopRW42ENdOY+SvA
+9hqHsWiXPBd6s8VcywnOuVWirJdeCboqCROBsRw335BXDzaMOc28Oue686iFVFGUA7bdmKZbnF8h
+NJqS0hfnUj/hyO15fqoSDH/aM6TzvGz3K5HuSh10dD5GVDGIVon81HQ8KaxY5Mxckf3GccujofIe
+nyrFusxyYE1a460glFrHqXdDzWSNXUQsRb1zqOowsL+Up06HTvXRcpv4jT0sQI2OTchHw2LdxpLd
+6iK3AHXR0PkLfodG2oo82bKAPuzi5bF8/Qqj550J2uCRpETHi4wGxej+DKPBQQsWAF0UI3SDpLxg
+UfnRlXZ6/MdWeZcb0Gs7H9eF3rlC/MP1brbQgJgs2JDE+YKZda1tiP/BJMaVRbMAkmNKotmASTGl
+UWzAJJjSqLukO460qi2YBJMaVRbMExHWlUWzAJJjygSodYByadAKlqJiXXI1uUyyC5CFZasv6aBt
+p6wBOAVAvLSD8cDe+Rqv/C2pJQ2lTjmtHK//99hSydQj4oJlBsrh0g0R09Yg8EUhN4AD1WiJW1sz
+p1FKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWy8PlzBiOx2Tm5
+KBPw0lr6Pr9D8NEbdlUU5Pd8fwUf7qJP7oPNZQQonbqEaE8ncNDMVpO/E9VI8FN1JakqGB/4JJjS
+qLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpU9e5f9+JZrkv4A739IY
+xMQR+HNuj/dUeJ87/uiaIHzAqNV6WPXVLMEGG+20ksUHxcMWphVEa8oZBbQylkItNmnMqFur4JJj
+SqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFsvCEVWzLu579fJDJ
+eLE9125bOFY+QH4jFJElYizJt9mjtQ/+jphjevkiA5MoakRnf6lUe9oTlSblHydeNra3b31WVLuj
+BmsRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUf3DMrba
+Rm3Dygy8+QKKUuezcT48DRwpMTmODxB/e3E/9Cc/8DPaA+CSY0qi2YBJMaVRbMAkmNKotmASTGlU
+WzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNIXz4C6UE25sHVC71WPYBa4d6PRAYhSWhO2lb2
+n2lKkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbM
+AmjmlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCS
+Y0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGl
+UWzAJJjSqLZgEkxpVFswCSY0qi2YBJMaVRbMAkmNKotmASTGlUWzAJJjSqLZgEkxpVFswCSYyAAA
+/v7KcAAAAAAAAAAAAAAAAAHijWjFBbG1Si3+99pNikLV1U+/xj0pf+DWMX+k9uxiBYPbVDLPXCm/
+ahiC73xHkFR0ZNCBDffMFz6SsZ8f52WcRtClXEkXLT8WzvTvxPDeWfC+ZSIbRAzGoDYckAc/N2hE
+pTZfuZGJ5s28f7o1aBxFs5TLQLcaVPbB140B5S4KJ4QBxOLC4+OMU5f/+5RZnjGUvp9NsDB0wddY
+As8PprLXqX2oMQTinTCtDgNYJn//BtjC+cFlMgtppNnKvb928H8IrmbJMZHVbZkz2trA5W/lLI/2
+GoGCNjFIuOgFrO6FLtj6YJGUfAeMh3GXVm82Ht1eUL3SXjCfHPvx4TcFQhg2hA39eSn7h7XCiY3R
+RbcNlkwQNdpTMdTEw3vXQQTUEqGwSqObotOS/SRhOjNlmVnp1z13EqJ0Y/2bLBNAh21eC7WZ7P/C
+Hd12PTu4Ac6RYmPDzlCBT/dlVdowb5LTJJeP50X64biqLay9rHN+DFYCCFSm2caa0dA1vhGu901Z
+60laM9+T9RyQCLTAyWI3JtyXBPJwlUNMFZj+8WL33g75dLk7b96j07TEZSKXr03jAR/L34AAAABV
+Af2q5bJyGttGGkFB066zjEooRy/9RDkI7O6Z+qD0Ij6qEVSxkfgXCUoNRIedPgxnn50X0rkD+1WL
+SL6pSiAkbc0pTWJUocLuTq8Egc4YIbyfk/q+7zjpZhyb0kDWb1KTCBvykm16ZtgUbX2oIo3aCTWT
+up/MfKy90eGU8gfbo4UdNwA5rBoZHNisStlt4d8gXmAN68ebkgAS+Ui8bWtj73Ko++fwe8IHSg0p
+KXyEBmv3g8/gdcsYBrl3lZHEmB+/K2cNU7VnMuPogCIGjYEm4InESUeAfWlZPBrDEvZoRiaj17So
+rW44qkBrTWt1rC9kNnx5wQs0OtiZUkdbE5dQ+Q35mq7Fn7tv3wTmuigQLnwDIxoRWWJOyzX2vRiC
+GhNODFYIAxdA2BqtVvQK9EqrnTK1k6iTGMEj9jtaXOR5sVh+pwjMk/ZFlycp2PseGFBCL56NTbnl
+amtbqIsj3FxAzPp8OrTR4spHMh8mGpG8I+pp9lA1tMMndtPBN3vgexLBbZ6Wx2/Q7GcYLKyvvgAA
+ACNLb3Z7YcvZhiqazn9cULWkUi9g6QZgYaeLkes+tHhmYVaNZT9MKNshQhXkwgRBh8TPyHgiOk2J
+3NHIWbf6EsarNeozexpXvmaxuNo2hhnOWpfTCXhYvMQkl33FSjfwjXG9AduHmxERcOwGgLg5SV6D
+bzLh41tB9AaRHP7HkhIm0hD4AEHvED6eAWdgAbgf/gX0mv8OzUEpABFkZ+TuyQCvB0f0m03vVbK0
+kPjHs1QOn7VHYGxU/4nXYPt+I/q5ghyBXp0tpZ3qKToGPU4yuEkWtV7c3EJbeBce2HxHZbXeDyUm
+mm90IU/lRcVBdLI/NuH7iNIY+4et2CXN16JQz0WxBbC60L3UJsHNtqySQ7TVpNapNqCbO/AS0Zeo
+U+P+xM0rfP5HkFOZ4I4Dmvd4WytBtEs+gBhnPhyMu4vMEfqvV01jO27sURA0gopDfjhW9WJBd4LB
+9OfLP7ZTwBDbx2MuKla6yb+udt9Lxp8L4qiWJ/BM4eX9tkDiKOGlNEpzvFj0kM7S+NYcQhu49pRD
+yn4u4ji+63kZOb3Ia5+jfXPHmuw6WUPn9y1RHSKQdcjqjrbixB9AtxQb+xVbN6WLOW67jM23rpc1
+468oskF2owSuUV/NMdZ6fVL5v8831HaSsv/Sm49Ku5ZOrZi94BcaaA1VImPnO+mKzxaEqcN1VOk6
+CxHe4vmdrmWs0mX/LY9lmIhR4Mp3ha7WXQhqsn7DKvBW7nS9QBOpH7h3vREGsLbsKNL7ZZUjfmA4
+GYC7Bav6b3DdeQ7jgMhttpB4B1BzYeHypTobM8s5GDZ9+ktBWwYAIplzGw9iS8U9LFK/Hf2pGe6U
+8UniNd3OSF1sQAAAAogFFKlYBnDbUClq/A49msgIJ36nrE5y039xwvyI8wYsrNivXkgsDx41egIW
+rdgIgZRSX1+k/PAgNlO2TpuuEe6iUbOr44h3T+JGhbHnBBu8CV6Yfizev05XyBX4evd8kIdFgJbU
+e0AtQ1A5ui08WxJ6ppCrtsIqIl1y4hOpJMbynJPoWQbIzEZMSwe/SF5Dhwj/pHzqy/gDtrw9Z5mc
+3r0UHUXN7As7gh16bOVSnycXYDw+EfkhQrLAJnOY+c8YeqVX1O93pmEq7fQ7TTdXTf93bATatxTA
+0uKSc1BsL5xjePTyN87bgjxsjDv4op0nj/FjOTYjFPpG16slIAouzBbPZTlEEaxIQgAAKHD2zRNo
+2S6ASIrGKER5Hc0h1/UG70nIUr6sFCWJoq8EzA4PFb0Qb+OIebvSIPB2UUUe5lRFlHz8tDE5QXtp
+NMjoFouzX0zQakUYjqEmFQ6zk+bSxQuXsz9KXoAGK7e9E9PYC5cCd2kwQejeNJ+fZqKl1UH0rBFE
++DbkeVdDmYBQgI8fyycYL+rxw/CBtZzjoSjPC4ydWoHL1cFkuBgc3/EBJZKeWdpmjth1hY9XGLke
+kqWpOekwp0SwnENgkoawsAAAAJXCEcieEpVuISGrHbljwdj1PWJzlpv/PL/IzfsyWxWyN/jO7oT+
+mHQ7hESkCTIrTvkIfNfJgESLKX/2XvgzqhbyyqI2q4rXQ7R044jxnvtHg+MCm1jqZW7hxSCygHmL
+1cdyq6lAAyTyLsMHZuivmypH5sHhiR5xks56qj6Ex5LftRyb6p1EpBq6BFRY5M3NmAS40BylHaYm
+OxPtA5kVcV4/RVQiDIK6Epr6g+tZ3XMGvJUmS37tC4nFnWeh0+m86Ab+v/pZeDYNKXEIt1zKeJx5
+gSMEJnChHX/DppDLzjVok2TDUKi7pF/ziCGGmc9Oi0WRFlZmo5mvVYYfLD7taHzwIpQRpGV3kgMY
+qpUf3NEmirSqFynMO0CXBBLJ1L4+r7P8x/2tqJzarr29WXjgQgySY5GwV5O3ziaY2PP94vAJE8Qr
+rl55th2CvbhX5PrS0w5NLYWMRuhiroE+1u6PKD/5JyB/kiUIgBoFBhaPAJcRu8k8YoV+IQh2XdQ4
+DekjqoItxJAHtSvwT20m1quv9Ojp89ON5n+Ihekg669Mb8oyLzsU+0VRSAU/OJf01k8AYBC9x1Dj
+ru/y8UvvugHQk+Z86IxFAYGfUw78GAfeAFjusXv49WmFtu4AN+BaimUppa4zhfu2xEVsLigqvag3
+Wur3clc0kFelXSkYveUVCZLUcsPp4e9ZqMgewqhTeO15dj5fcEudmnqmjnwjCm0Qx9NbWJbtwIuh
+FWmZXh+QtNSBKo/g1iRJqUWYF5WqoyKiCRfK1VQHvJWDHvj0Xs3Gq/fBjtcgPYBflJLsXB1SZeAe
+5tMFgWTLPqnO7FZGcUap7VW+QmXTNgAAABylu8S+LcTONFU1gDu9LSpZ46EeHP/4k6TnGVkp3ci/
+pTciEkMt/pRNoCNEzYGZj/AvjMvml6QXDfPalPxaAqX8jSxy0E5a/TlfJ4veBwe8wB7XWUXQXfPn
+0NX7xX6a2td0DQjcegLfNx0w996dz+fIpaOIX9LpYriJPSsM0dlVdbIS/lt92N34K4ks4CH9Ehmv
+03TL/8I4av5UwO+j1jYSslWffdTGu/hwE60tDDs4WRriW1g9aGZ61p6zYsGe0cxarwQly5HbE1A9
+Ww9GEO3l4IgmKMJezAyJMn35qJ8AOOTzJUbUu1nJ628ZXl5j+7sLLisdVAbeW8+aOyB0YlUqGqIj
+CK0qXMmhcJ/L66DaRyWcSpf1YSYh4TWna5JKbtfCfWUV6S9dclCnFB3s/1PsV5XDIJhr2ICUxY7j
+1jRZXhIAorbm9cWxRVnJM9ab9o8eauzFDwrk1FNM3LFP36NZS9BLsRDrlSX0Tf8M7ayqTZFzGrAj
+2JTiivU1IcKgJ86S6ENw4XLIPp8PisjpkSkUFyp2PzMLaRfVL3Ao2Ip5kF1Gki3vfdNhs+eEWxGl
+pVnjko13aPcF9tIkvlz1Hmg2TU2dCsEFgW5t2Sxqu515kT+3dxojwnapUWxeFDT0PgriATTMi1Xq
+EytCThwV33b5zFLR72zAtn5AhqmrLj+iw10woamOHTPGtritdQTFk7keYKO+34pg4fE3qOoMQ1Q2
+SRZDqJ+feHu42lPl/yK/zPiwSvrBdE1LkClJSvzVXLf4xZ0hhcBRaT+8I5F/wKxj2jj8nthoinJp
+sRxTniaDsZR2sXveOj7OJcsr9FEyNGDwFbSdU9DGrhBiqJrENcyu0Ca+K/1TWPSNZoKJd5HPXgSg
+wxcU8EkatWImhuDCdPnFTVV3/75Zej/7EpWxbxsaV50I7AAAAKMk06TsbranMQi2EPXXPugN13BF
+rPBZs+QRRCjQSFMWHs9uOJRyNYmRXuWAlLDR37j8PhzgPvLLQH5j6edstPCbdhh/EgzkYQWCrl+W
+hkjo1U3jAKcTL5hA/RmPmmX8TDUjnamm67zXgxfnWIwl+18DCvxV6yIq58tP5wgl/sPGNnWVeA1k
+nQyNeCdBh9HrK9V0AAVeSssED07xzj2mBS49oh6NlgVWCeWJuvwNMyPCNiXNIAAFHl74FVF6EAXD
+f4kSloLb3gMMQX/Vb5iaHkA4lXt4yidfZJVsdBvsO4daVhDcEa2YrQHdL5V9FGy8cqX1EGcd00YK
+ZFnKUO36DPzxZwyf5CWg3kNYPt+DKubIjkVm1nLJaKlFZSyisL2jB3/54002WFICNpAqp30GZgez
+oXDStCxV/My9oGPPLFgyR6TejOkW9ZfUZZWwCB9mFi5OW+j6W518f4WY795ydn6mo2O5L5zh3beU
+hSq+4qacj43kFsSryQQHdYy632+Plw1hG1lc1s5z+bLGJaglM2fEEPtnOBNhZH4Q8/btLkr10o10
+8R6Y4UnYjRF0vQO2cknI/MulXAo4Jp4VdSwqjMStpZ/tJNFjgndQQ47WtULhWURwrZUPAGmdug/h
+OqOuRN7+nKEsbxxyybAAAA1Y6e9/0KuvNjRaNGsDo/KTMq8H2dU8kL1oAdZsAbT4Cc9W8I7O6URn
+k7XFP2+eQMtiRHqmBLQCSnQ+oNF5OI7XIXP5kMhpseTaL2aboyjx3BYVRSq9faQi7EkD3ymuVTYn
+rV4T9Xy6rKjcIPuIMP96al9L27B4j4zbOlKfCQRAYAmCrrg8lBQf/Ey3XocHyUlYrzYu/nkAcZG3
+Z+Rsi8drKy0IDQDveIhkakN0QDoANEbQMyb2WTJqrJPXbykHDPEuywyySm0od3T9RJOVwzad2T3N
+yOlTLVU2JpwAr3EiDO9xIK1cCO2HrUNnvbd8Lgn/0CQdo3NB2x4KYYiVv1vrgK1Y9vgKTMSPawx9
+9pkY+G9TsFpqxFNqXR9CYWd6eC6fYGEPni2SzyzYJgxCFR/7foGblVb4y31+sREK+TWBVO0Y68nJ
+FmGfH14Ghbfkenzwi9IaB6GMRbqdfINRKTUCALyvZ5+5QWlimyCaFkSJUgb0dRLdpB/SALvo7mCa
+k80xDLitGD882Roc5ccLXACrkA+6SAEkJPYJ7INNwBIA4h1bhn0ZPGkHOAEl7e4setenqtCGmj/o
+BF30b0JviA04LQADeqnPoG2SRDlllAVQaYl1rz8bF3oBJP5VqJuJ/MpVO04ECzDQb483Y3tGuyng
+EjFlYMN/k+LidjjuIRU8hYw4SqW8dblBSQudxUFNpiQ2tTOVbk0i+Mm66bTJ3c3Fr+EX4gNGjWyo
+UvtZeF1LPDnl3Pju951nPLBZbHTJEauOF83gcWFAFwsiALQGAWuEwFk47pSemyfu07fClxMs8j4z
+pz2/Lz6u8e0Bfwhf9LO72jKi9R2lwunb/ZehgpH2wGXkb/tNeKrlnD9Tf+Gsag/oEoQKNAEWpxZO
+tl0qznIUJVz0VwQj/kTVdIC/j9T8r3UU5MsoF5z4bDQvCIpCj3NDj8vAofiz6Nms2fgY65YEeovs
+ylj71vQ6GXzf4lkdO+x6g/+zTnoFBTs1c9zimIsCVoajtsCZqgUSYXcmB6x1adQvztOXsdhU900g
+iNl+2CfZgoshoF1KpqjVqNu9thfrwmQFcyHmSB3LmBBzJb6TKuAxojSpiQ07TYp1Q9lw/7EeRTcl
+7WmLzfaHqkYoW6Ao5MGQWSISDtX/tyGWBY3BYbASQHpEw1z/jEePMOmeAjJx0C/g1M/1JU6K8R0N
+qoOcWcn9hecV7diiZTiK7k02yWdlzV22oJd2Y+JTGvyg11Io2J9tYtXeq3D7Sw9RihkuJHtTA80x
+4UOakCv9WgwxhNzLjJ+Q2DGmPJjm5uCloZ0vv+bJ7b7n5OYleokPn5NyGMEHyy4+7/bN0/cA1OfX
+iuFa0yUbkuhQiey2MuLZaocxuS8Tm4Dw01jR2rkb5USRIeRbVMA2AsmIR5Rcw3aOGbEh/KPn5imv
+B94dz/535q2tiYAq6bWFT9Z9vtpNSMJNnD2gtqQYxTj/xsJM1MfGewnvzhNuFqdKn/+DrNA7BfXU
+GKmVc/+cqbZUgjQupcI0OeXG8PgaXy2xNvgQIG0hbmncsf2wP4T6WGC2L3SBhL0VMYVKGlUoAkQs
+spRH0oAShkFj4N/sM8deBZg6l9czvgHvhSX9YysedvD1H9FoMui7DRdjfHbqcRpIoa+VEGrLyiJ8
+8f+OxPmbBJ5t9mXr/fsGtEGRJobzodumsjv2W83ttgg4f9QK5uMAbALhOm06++3gsRIIoD8x/FWl
+el0gL87c2Pqyrt0DE2xFza72Z4GI9XSmzQM7kHo1ul0qKdroBdOiAGMrM6Y41CacgrWBN7Kk9TCo
+bRyVTx5zmdIBGL3Y1G6+9KZ7GPIBgkiWw62tzZoj/8vqY/drB1OyjZBGDKxOAYF2IFynx4T9URHx
+dS+LG2Cmo1bKG6yC71St8e2sc56+UC3K7PjdcMCcn0JvqfRXz73SKeJeK5oefXxBs1jeJ+/Z3z9s
+NQlf1L2OcSJv4s96Oh+d14MUloiAc86W6diWfPWOycJaYBRVqDMAV1DGYYwut4IBBlIBJoc3Jh27
+T/rgUycYen+J+grvLWmksjgzXDoT8fFQshseolvxJ4cG50+mXmG4pjYJOIEpvPcwsoOABU7rkI7v
+6ZhdQ+AYDqLFW3WR5dvyIezfxt0RnufN5L35LQ3dFhpv4l2I58br6RZ7QnWpMLQxpQmbYGa9pL/0
+Zvn8o2bNbdH5y9U/cbLy+UAfkfFEiMnKqXRfrJI93EYqLDJRFZEdEAQnnpizKJCZOzKuECqitY/B
+1HyGJED7xYwxo/RNI0juYzPUUbcYXlmNmm/Vg06QZ4yikz+HEuW7X8s9vclSABgBkSQXJYlmF+yy
+YoDi7x80t79IFcRqG3adNLTK9jNg5Hi8swu+956nVU8nrqp4PM9GMyBslW2KgI/1MdL3cofBbFTa
+6y0nYs5H9Upd9bXxZNeuxbYptrclcbbeqcstjiv8ibXi94boqOY39VYg/pecVzC7x4mD9ryOAcA/
+mKp+VsCNehMt25Dsyltwksm4Vxoq9Zm/QFaH5ZWM53vpduk7L96N3bVb+t1rR0OOJlT3maNf/hPp
+jZVbKoWXxJt7S48AVFvBI+yObAIr0TICbRmxi+E/vLH8907ZcWjHLjLCv+eCbLTgbIkqcVD4xhTF
+aTbOBxAA26EQn0HP56Iacn1bDMiNroJymvpIGCYz1ru7DtXCbHOxNz3o0I+/XwxsFId+c23ocHcL
+PqEE6by6WiJhBs/z4KbRZjpfuN+yks/ZovcBQQdGbsOo1w7QaczAjctAHuLIrGxlLQURJBHR8QGO
+gZEnLeBOB/xlYCn224fmGN3V3iPFeFecFKEvG1fbrTmIO8Z1drb1d+jqaCGb8fmq4uiR/RlpSA/p
+maIUcS81wEKa/CMndgqcPCK1DOw9LxcMWqHzC7ft7m8vjwPTfOVgXGDGw+vTN5pdO5GD5yDIOSEb
+dW5pHD/nBdfGGX9ydjk2ST7keQuHsZWrssZ73Wzm1PGHxO/FgZpb7iGo4sC5uOb6tioDHOi/2aaM
+DVZVpW7VtNcBZNyA2WHSVL3Zl7HfGghe8vREy3HNiSYc3WxMtKVfimQvslnaeRrqmVP65n8mxhdB
+SmUmd7zqeO6Y/A2C9sOfdjleqts8MSxwWQxa+iVh4kXyxClekb6n3sv6rESMZyhHM2Eos3T95wCx
+MCbA2s/fUMEhW98mlzLZLskXfKdgTlCfWSZSGze2mLOcje8F+JgJTkjvGR/XDHYJMB8xKx0jvw+4
+JLoW8lum94dfpalEbAVMd2LRbvIuLIAjCJmoWybPK6uW3UDidjvplP+sqnW0Dep36tSdz/wW1Zcd
+lD4TYenfFP/Hv3A5DklMA5dyIjHmjohwTB3z1rAeyYKD36+6JA7KDid7aEhzFq7ZZKRPs5ZzBIAc
+XaiqWtL+oc7xDFMaZJbzCm0wsb18eNIWtINwJPnI+A7W3/EPEf4/MlHKMEtAZTU2L1b2ODOc+01V
+wcnYRIMktVJpf3JxfBg06ORy6i9FBQtuIDpGHbrZrmV/hvntrgbUUY2m/fJIBd8+yNY1jYWyHaAZ
+8KD+riXyal0nzI+0DIgzAN/Cj2ihzbK+28I4LVZNEY7jAVXCQcWvU4HvYUse88JtV769p3SP7Mk6
+/FgnmgzY43Ia9L3t18cXdNlvivkCPy4xhdCW2uiC89m5IR3NUwda2tsPSrbhSQGyMP5o1v45ANsJ
+OKCFLYaBJQOhMBZphHSUMe7jhUhHdHQKlc93Xq0ljco6Ye/KaAiWRK9G2/ksAKAXPr449TzLZJYu
+uyfUU2iVtVtAQ9UmnO0Hg8J370iKToISZH3qlkH4fvW6WYL8XDxCnOPGCqq3d72ypNvJKKW7Qsn5
+smVIB3T2f0E9cdKsceX1owTWCcaWW0AZ7halYKlNfuLY8FEFU6TvMukM5jks4N5JMo0OwJlBk77j
+5eMC4PG4xnJ0t2OL3A5acNGANUDwz7VsLJPRa5VnmGuV9MI3feYnBB5C1eUEX1FLmIvNA8FQk6KG
+W4c97Fo4jA6KVojlknxEGQw+T6rqj6JNpnCXS9+pw3snnpSgRdARa9SzntClwLLxEsAnEk9+PyyC
+SSf1A0EiJ1Eku0twDKWR1BQxO/fs0ReLqUYYfCbBvsqxlMnaez5siDVSJFp1HnxNStAAQPcVo4ol
+77UHcgBG1SAY3OjB+O9oQ3qZBt/Ow98WjLNHGQUIYnuznCUhUTspKKY3zuleo2R+iNPMv348bLvQ
+oXwl+9QkSrtHIeB5nOUbfo6dV5R7FDEpLzkVAKiXNSL09hjqf5Pvom/6iw/H3B0pjNzrHG24zoXj
+A7s/lDhvYaBZ1a2U5yHllMNAM4TCw0tDmf7fKYJ74xU7P8eZptTKi1YkTTjJ8fM4F0l2Z3N7icGC
+xLDobwanUaPWBgZ+hcE0BurtFzt3I/jct6Y9dzDX/AtI4OZMb0ya/1xxiUjm7vnK/B7nPDlXVUeL
+63Uoa7BYGGKI17LCuXQs8KAaVwkZmJ4YWMhkcCYUrs29TFvXxVBDRffwS595iBXRAZpbvfZsdba2
+f4T3Ly33x5N2muqeboM/yovf7FfPuh25FwPIf4/FbKKj4J+5E23FilvgRGKpP1kjZhVM7gVFBFOj
+qZE98aDrXzeqXmiMeqFtKuX9gtCxUWyXmiZA8kazv/C3mjiJpkjVoK5u06aFe2JGvAZsXgtW9MDa
+gWB8Ck+j8sX4g7Ornm0C8jiC6jLmOs61TP7Ftpa1uqjw2bQUmUj/avfPlLWl8wfwZ7JuUEtKHcZm
+Ks0TKpNNeRADtOu1WKDRzplZzv9BLudBYR5Uj4jyQqX426cioH2y6oFXXhOBm/G+ZXvu/PFNA3Tv
+zGfMF/8KmhPQkp2miiJpu8JDBJPFImmL/lVRZQ/ssRAcRTgv7xvtZ69iLdcpI0MGO6P2cSFPhXKE
+Gmb1jsgDNcXLKMVKW70tyX3rmv8OI8v5Hwl7Lu17IAKRIAnULa/hhrmaCf3OzuXOV4cG0djFcM0W
+7wi3H+ezpwvv/VqdfFwxBoQs4KxyYzMoqCHGot1ocFTdgf6mvITSbgvbKI2/teXZX3cKWe6t/wp7
+9OSTmeNqtVeitBsJ3meOBST5P3xTOby6P0pkhiIOo8FqyIgH18GOuIHtLDTC6o4rbRcRPxmbo2//
+ppXVknH6bFzTW46JAA5LdaW7P4alvLoR3HBoDKf/w/ZWg8MT0j0h6Hs2FCo3ex405PXgNN+ZHLTa
+dc4OYz0LzBcdPTNMa/wZx1fxV5Ltse8ugSBthlPWOfq2SDDoLd8yXLZ/FFe7VCDJDcx2oNoGR+ds
+bL/BpWIsSPXQxAD6zgW7HzLU24qMG+c1DirrFFQigejYJ8W6//VVtQWk4FiiBxe6nj9g7uSt0Ikw
+tgvTNAYPrFaI3NfLSdPdR2wTGHfjrXp9DxdIB2K/XC6rwhHMJmrZsEK+gP2zuj5GpEqF6GAi6GB7
+dJ94+uHt5uN7pRxnlgx6Svw4RIZRD/El05bhB1QAjkaVffone7YHQAa56EeGKxizBkYM0FkyFkyJ
+4GbwWHYrHapLZ2HEICW0UXOfV3h3igZqSr5/0sOJrqF5cIWwngGIabAycAUSZUAhh6pU0U7MQr/Q
+MZ1Sn8gkmK1XKjL397b8BME05WF7Fnc1OG5ej/h9Gbc7UTlFBWjUWe0rZPDVD1qEocY3pQIAdG8W
+mzAesneaL+QudQyh2F1f8W+hY8/sEtCbyH4qUzVX25aOMMRy2XQNBFN4qwfUJsKa2XeIJ7SJeY8M
+yBKFLOFy05fSS80KxDhVK7Mi4HSdQnH84ProhtimR41S3g6elUVCTeb3HUfJzUDP61Q58R6+AC2u
+DeXadwvuo9yhbDZULxpCmZl2ApW47liky9Y9Bze5GyqYhtuocL5yIjHE+DEnzziciI4XaD/XBfrW
+24zY5oDIWnFSsS9E59F5YpskxGlsTrfkocVgg/LOfz0Dw1KSuqwlQlgyo6WMTFxQgAmBtglfhQdM
+In3LQ6d0iU8F4OAUpYHr00nE8Dum6zyG4JEoeB3VBwODeFbovDJt3N9qNGQXXd8ZB3O5Uug0lzxR
+YMMSscpdCZ6VrSr1BqQKBXoFiA2/Zho+24API2lWu9m83xpGScdmwoVDgb0FzeA1PE03RedIPvKs
+lrnXIRG/g41/8NjdHX4KWigm9QOfWN7Lq9w3JHRQoduiFVsfnUmY60COz0jyAT+bYv3NSMfaclid
+DYf19NgN1Uezy4xb0Jc/WRoxKqB5R6KGVQ0q5bZA5X0PQhiElcM2pVFNxOHS7jXVCKcacal6j3nK
+y6ZSD8LJz/v9l132f0qPWZH7AjEtZ4XlxO3QBrbsvv/obz4WB7UFrVZSUNWzAWug8t2puZw68bMx
+LYNJGAN1I+4cwB+Srdo6k0G9NFCsF70jOtc19FE/4iNpHR9ISlqz3gtmzyXeUFBcI30iav6YNBqB
+4r2Lm6/7+6PEBJJ54AFmRFfxZDqPGxvtVVN2otMAeVm9aKLgmMbnYsenVlv/mSIcgKRcjbEhoeTa
+cT8SZkzdOUvAtpmJ+mApVnoUPh3YrICHVlyGGgGQD32np3wsc3jjVwSUgK4/vwuEPGIAuVsyjPoP
+3KnJ25v5VDMyLrfJpOgkCebh6s2yb+nJjFxcr/MWl4AAm1IOpZI0La7sVCVJgua1CZmE+9nvN5kO
+W+wi6lro359zJY5P7mCvDieySgQIvpIYuB3uUFuVRedRzIbg2pMqvTXp4+DbWTzPbg/kbnWkocbl
+mNvjZoSG11B9ZYYcVpMszeq6WxC4ti271NaoJWas6/5TGdVkafEjfN19RKLWaUF64Ju775aL37h7
+Fh4ervxfTzwzqOpSwvqOCKAEyQYs/HNbxDNCd96Ns5dbYSMJ7Qw5rlSM6IeVLxCAEeC754lJ4BS8
+a9eoP9wj1QNL0No6Rdda7HprTEcEAMENAZY0To/d4+H2ki2Nm0yHPsAza/pQ7ngu+CZmlAH4nXet
+iFdZbBMyXLUmu4WM0QhdwUWAnyL/BY8hjl6BO/4lHRHd4gVFnOkqweENsfBQ4iUWXODhmRDZ+Vqv
+T31iqXiE7+MiWCKXjEpMfvdTvk+D1sWZuH0teUEruUElJ35ZZidcMz5MkGw3wZTlrm8G4TYL2HwY
+rJdQ9SYSsV4TY34AoxEfocmlOCmnneS0rml1/DF7m4ahEtMdfrH+f8jDSdm8on0mCAd4aWOcRJGZ
+vT/4UHO6qRHlaPtuNMhX1AkddIAWa5H83WaL628y8E2OWksHBOPNL0aFvnibooWzZTu+wMjHihuf
+xx2nvTBjRmaVtGzjjNJ7lnfxRrEYiXKbPfYjpy+9SsjPpKH7euTEgcq5qijGPfQx6EmiDWPz4yWE
+8X4npnzjyplBbX/9BLVKVZDeDMiWJe+o8TNgoN12GMjBNA8VIY+Y/ZC44j7Sy8b98t6Xyf2+wzGz
+nsw69VgpWm/9+DkROlGxgpv4i/k2wo4aDUCu7WIUlpoO/S6QQngA8LpbKmpaISulCZitisQmVz83
+ptrRrr4P3vrcWNBWdqA9XKJqoU5Bnjn3VfEAs5Tqx4EhAqNMjnGDwFEjmC+La1eyImGM5idNMuYz
+gKFiiOTaGgNlgOSq56jznUeVABl/FVxNGYGg0KWvKdcMDwyzetCgUT2ZZcf6r1Yn7pL0Rhj5nA2r
+b3pBqqkz5pFjsGtwVMCSb3I7F4hzrB5zPe3sCZyNpWwGHDrrjpRCUp0saTaLYySBXNKMblnwW0AO
+iYSpyWkR3Jod7mfYmAUOZqR7FYT15l8LNeyV32ewHcd3qBw8jFzbtaG51wiZfeIFHPbIKY4YSqL3
+QBJ32gMz6VEg5RAWzqYhlnTet3HOFsI4FYI3MPGvCgE98chlEIJ6VOTOYkc9E4APxPsxs8gMqcfz
+hkF1e70E/gxhbwABGH54USZSX1A/t+i1aR9UbZUxzNmrIAJEu6esnwvX7B2k+W4+bMLEthlnetFD
+SMKNYlzFngCOKDSpwRE+Be0Crp7atEUYwonWJ9UmZmBgvGqP8KphpSg0JYXjoSj7coWCMOTtWdLs
+rO+O95PFNbdR/Nr0iiWOOOxfhchoqppKcvG+7dR3d6sGE+d8AXu6pEoAqmWIMW1RSEeRQLmjDdv9
+f/cM4i6M7FkZFy4Vo8Rl3uqiAN1bIIUQCxInUseU1ePfA15lmVu6zV3m9jyHeQinqdvAkvsgj0un
+OhlT6Au+sMu9Dt7fiRemFF8nnnhYPPm/lHf+yjnn37GJJh5eIUkDcUVUmUP7Qje1CNbwjOsOgTPT
+XEEwaP2btFGMm4kenE7OEdbmFAZequSyVYOawCooWYe18cMzNjqyrhqbENAL4rL9K7eZwRFBIwPw
+ZPWOVc4eN/p83oBZhru5xd6msn3HCmYl4Vy1Fw2f6iuIIRlWBTuQ6B9IOk7UNgdjqMJ+9f1eAOrd
+yEG/B1tnFuBDXn26TEBsVbqXj1XVgyWvyW9CI+UU9wawhxJ5uCqP7qgufEUA91P5DkCjdS23AdP8
+7qWjhHSvIRPBEVeJyo/qPHiw2Ef4ixCGM4aRu4QzV5QGNCbSTvEO659GQmPl4cDbj05zkz05/Xd2
+plClUODQoofGWuYIS+N2ccM1b9Hcvgt/f5HqflHDhq5P99MwNu0EuCoFBmwlBQKxZQTCoasVPupw
+rOjoQrDAcFlnEuTuBtw3stXhAI84wTT5UhFe/zPnyALZdHxEOWBQXtJTTBDOX24q+Q0Irpp5i8zU
+tPKlJj5D4XT4l6DpWun6xpCwhbvqFCuqFxHzM3g3g3Lybc13k27N6oUZJwbMXlZK6L3Kv8PmrNO4
+LqtpNCbFN6KIxo06PNu0he368tPX+c+3pI6HN4SgrO7n+/t+KzCh1Irct7jy1Dp7ioJWEvfsH2Il
+KiWniaP6+Ae/8eh5J8RmMdvsuyW6V9dUN9qztoCQY18AnVEgnx5EMqxN85pbdbFs4oAeEQvuD0Zr
+ilsCzCbTL3vlgYmsJ8tKilLUaFxPea4FgFnAU6Bdw2iyOEpgMLuR+6r+ctXdAzP0BJstHzSF93zF
+etUJmlXf0wRuVmfIISCud2Kye1D4ebZv6JD6V1ixi4BG1jqM4UcZ9pXB06/+Qf5jG8JtpXyHFftE
+0CSLNPPA+5OFaEC1mqWH3g+1uXLXN1EVduSgYcLBvnpqnwq3Jyq/ngIVdBs9p2czFFUIZZz3oJxb
+fdmKUeqbWuHrVmq+z7q4oEjRq0DV7YIRGoPvM+J5v1rEG7NrNSKevqRfsb8hK9JdyG23u6WXiwBH
+RvvGQx09COWC7LCpuRRNQVM+FXrIOl+Xv92ETiBARxMNPIANZ1HPfJanAEhCv7NU7o1ioWRHs3+p
+5rcDWooXYp3c+ycK5yGAgCW+mDISHqt09P8YMr/AdAwochDN3pmef7qaRWFc7R+Ys5KL+IDMKM14
+bj5U9yqUeZgZIhbg9lzuphgOi2Ia1MxzzH/HoSVy6QmKPtgpVxVaBjMuRE4scuFEZ7bPGkxyFmxW
+p7HCW2GU0KgYQ/tmXDsifYTX60iwAru2IVBUIuvm7DW1mcdxs9P682j1YQpch/DS7F0d8ghLBpSu
+fh5La015lbykn0xpjboxdqlBcrATUGw//owGUBUnsQ6xm+2sEiRludomJDdP2XRrfCW+yLh/Kmiv
+l3m5xdtncpcUZtK+xt1XoF6K4dOVVQ0ZxKEWpQuAFVr+hsLfw1LQjbfHzV9NwV7v4uUc3Eu8i0Ar
+QDAA4uu3isg+kk43vxc5/p4ziinwNtIQQnlN6hLmfEHwQJas28LlVt8pCk4BTu4laZucF9HZHWiS
+/cSITfDKb5GuKxrznu/6vJNnicY1agwJLKEyHYaGIrHfuxbl9kuP7rfHx0drJZDCxABoW7WZwzfu
+nkaoDZQa747AuFG+MQr/9oQ2G7G+n2fNnoHmcKA1mBlx1xGlm27P16NTk8foAscb31pcHTEUhlq0
+EjzimjEg4NtfXNY4+sJP9723y+4CtE2PYqH3XcL/HQjpIawiKwUm+1gc7sk0CE9rB+gB8XnJpBqq
+sVJIk9RHbgJAaZbuVvj4M7BLOMk53cAvHDOajWesUBBTXleamxj9Raot1M/gvwXj8Ol7s/VhsBpx
+uV03t3qcqtiyO2gbn06eqCa62ZkK1Pj8bX0/5gvraMbrZZPw814p5RadGX7BjVRP1nDDeT0TWX0U
+iXzc4RwXH2HoV0HvV7norwaRfo3o/zVwqb6pVUAR0dKTTFjlXWwhy2quKXKJZ3x/vM0PHYZvasfm
+syek1tjaWsi9u6RN5ymtcMip6sjO8BdYWbshjowasWTzkhWdbdQdzH6Xt+PhqI0YLKJgZsIrH4dl
+FtysGVfBjEn1sww8eBxj/Qz8E+g6lg4fOf7/YJFY50U74YaVmisjB2Yb8Fjw457q5L6hMrfHBhYw
+gGcjXJFWchcuGasQR8IZ0ecV2thNn2NJFR52wsEyKYvQlJeb/2RHKFHE8tT8wgKNJQd/v28SJdFM
+OETRSIBW2Ih4hCREBAnqAOp1iFgB18Ac/bMJxaGMYgn00+V9+jAEqMNiZxqAWrXoOQuT7PDY264o
+raHdASiHd4pZEx4gZPQEOH/42z02W9YO13E9/tMYg36ZL6i+x/ghBylcirG67+Sm5p3M8ZA74OY4
+XeakBZaFU5dsBqiplMZ1v1sOnJyvBXVfXSwg/w7yxE3w83t4xSQdMEzQzR4ox0/YRlMarH+I3uCi
+7FX+HeHvmRMSIaOxLUcqSP5lbIby87PKZ/kSGYFBClPbkhrL3um0VtLxZEEsV4rWoHkuFbWYaVSB
+CJSjrTKF0CeIEAxTbe2Wp/nXRgyIJC2o+LNnxoBHOX4gU8FaD/X+XvD+LEz90QZAWioWTLpmKmwe
++s1ql3q5nbyQd7kAlY7CCX3GGxf9WhGMWH97nf9TrlfbcPLiPJbdQ5X0z3i69pynT+aXFafiPxbW
+E9uSIsOJ8Vgmp6fF9yYw+hOD9o6tnOnDwRFGIOu4XN99pUL/EPDGjSmKhJUTnKvp0Kyu7udJty8q
+aqAWt3WbnAPRASv30hCQlvUaYaiRr3ZSMy/a6l0GbnggTQkBsKi8UlExo92w2UG1dSU9pL1tfxOG
+0QqcaVl6oFEQBivcMHb4M8A/ltMx14FwhaHNDUmUFWaX87OYURz5lWwPJ91QoW12Oh+0vNV2/Ccr
+UygkaeXxLO3OHeQayvfkmlxJIcJsaPvt5Dqu1/OsIcsk6zByS113eJxSkl6cf7i65tufJeW5YudU
+K921vH16AZL+TksM0oZiE5w0QCZ3wmOTJRGtOFj+hbW41OVKO3iwKPdeu3RpPRD5B9LVIuyqAtcm
+7rsyaz/xKFIFbyhTvMZUF1Ipoytl9Ax06G6UIGtbztCyFl42rXgdmQzZAjoZf6+tHrsOS9t/HXWU
+3crLhMgrnEgmJf3iBLlcqcIwPuLNf4oQ6DlnGZSzDt+ytuR0dpZ6kcvaCYZYANUwM4nzO21L8U3x
+2McXY8DizxbKEta5PS0rAOruDOziROoj8OosEz0ndOxietL03Gm+GUclYoBcPiC76WP+FRH+umPa
+LE/Smj321xuXp+I73SKLXBEZUMm27hG2IM8LFFgib7TzFCFnlUISbIAusyqaRqfArcqLoV+kC451
+cyMZPp1Tpy7F9LM+Z6Tn0jTOCRjrgTUp0LvhkjjSWbZTLEedatCAHFrfZlBBvePj0mu9q1eItlcj
+YI6Ry5YharCptcqB4/t2dM13fY8y/bVyu3HEFcyXF9PEcAAZoJpdd5ZIjPZwMqJZKm4kDj72VBb+
+F8TwHIr064DMy1xgfriFws7FjGcObEan/8rMaX1a4KdeWfMKNunFz8CQAbtGMA4ptj6Kw5j7P0Hn
+StCAWk6wSyoPv53xh6N9XOlD4lwlrx5rW8ruLN1x/JkMvPVQPESxUUaIAbdvlMd+XGz1Rx3xKOL6
+XSCDRF/P4/jlkE8ZkaqoZ/Jkb3mRNizI3iHLFqxoVCk0otWrfJa3PhbShnJzSVbGDxQbQugrmVZM
+DoBmHtBSQe+Eh3q6e7fdP9aO450iEXdzDY37w/5Wy4HngtgWKGyw6TD8iAViK/PhGuUfKzRNPWgq
+EnxPbXv4EraXbmfdNaLcF6ePuk1qfibbQrQNrzOemwmgrJpJkwhyOtlLinm1RF2dzafkTu74WNZT
+Ux4SHl4jSais6mMLpN5FW0cieZrEbmVMbpF30i7eF4BursPuj2qPg3p7lF8v5zKEsSGRBfKjWT1U
+L8eliWEEwZokXto/lCW46VG2IVn7KW7c6LiLCyTisZDx9qQRSL5zwjjaf2uO/waXnTUzxc7YOilL
+ragz8otABeXXViBNqAaBD6pnSoYc2OrwREBOWj9hJS9Fek0YLj3NGb5n+M8d0zM/EJWvLK1ZQO/M
+eKzW3uSOW4P3xKwFTrKATl7ySzFF4W6v8CU/NXPfGPG0/Zd40jHjSILbJrh7t3JNW4bbFTe8lPfM
+zepS4GOjtuzTsaxXKprP1hNq+458LnI2AV5G8fra3fxWAzhzSpgpRyznBMq8IXIZswbnMNRiw7KY
+ywjJqEvBm1nT1Wr/j8ehzmFs63jsXZgjX7GUD1nAR3R6pAfwmPsA3CWW/8/mWa3KkdspMU1aCeGA
+x6kg1vpnUoenzH7zjWu8on+fV3a2U4UY5ASC7ui30kiAsqU86yBphhiiwYRQXq1fixlPaTY/2mLb
+bjnkF6Zj2B1HQ2ob64IQKPyghek13ZThd/LGMRJLlXzT+G7kvDfeceDy8Pl1tRuVmrkbi6yL6gR9
+sLJ/6vBqs0OU6tZzn4xyUdZXMWk2qqEEd6vHCniB7e6ptb6ifpmf8+191aTtUt+RkgRtX4+I6ZsY
+cqHqhtcaXN29BaIewv+FBa9ioG4ThKPcHS6+P0DNsW9qQNVg+DQdhyGAD1b5yUY1nerxvmc31W8X
+HF1/wAYfCvci9Jdd94juqlwke5HUF+qD86qtDiN2CnucEoBYmbEm9hJTeFKLjrJDv0Rr4GLEYwDO
+RgF8lMocwHy0QdGjWwziHjvo5e3aFR9dZ0JurQFtlGZyQ1Anke2d2XgbZD9z2m8S1qCKTBtxArVs
+C2gpfvRY6EKBho2HMsNTcLCTte/W4BeiehhZAI+bzasp9gBbx84NWhvy7YkHwnk1mVCK5VIt0IRw
+gxAjOesN/nplhgZZ+NLmmmrmMJF6VULDqmIhJnV1uEnbbYnCNgFsgHDRxkR6fx/qpMMv97PX7rtJ
+BVaCaHOn/PklwExgDmk+jHdHDi8Pj01j+YO+VLmOOmWF387QL2+/LZ8zkTuFkaazYkDNccC6EhEL
+HTc02ifoLDmKcMhZO3SBijpY1GnLwPed6dKgzjO5okqCf3nTQQUpVZi2tKJuN7dswR2ALUBARrgX
+Ma/VKoo0cdqJScRBVpcsyML66S8Ml9zgpux8BI770YMBTmHQJfzRwpbpYLfCqs9f0xwzWriakVm5
+YLNxSZj7rS45Q06Y5U0OJCXu8yQvZZPxZJPcl2sS/+HyaAgkvuOkKeXZZA9hbLn6xufwwOJieKKT
+hvHRciktEfSlp2BMSzpF40eUsNnX2bKjklcM/LSzOdokTW5qpq7M31dPI6qRXw4pHnchEqH8O5/7
+k/IzkTsJUJGLLBD52J3j4hmbcM/B3g7kHt4W2Vzq57YJ8lagjk7oBjuSRmMhbseIbF8R83OGAG4N
+TCUymR0SJ3YfUXslBX1hUPmRpzQE3XCBVby1Uk707bUY1rxtV7R2uyQjtzi3LXz5liqbXKC5E7mm
+24fhBNRz0zQaBraRdjwGGCaRRdg+1sFd8pONOqaGZoB01Gr894Ro6uqQNefPSRI1XC14TZ5CjW2J
+6x2CCEOR8ZBLFWnwed30C71c9zqDlZeIXn5AwlhTyEWBZvVgI4ENu6GV66DO5Dhi0napcIXqceKL
+3sK1jbVsr7qFYfWxhroCFqKtOzy2w3Je5TZDnm9sXMgQ//K06ziD2Wpdv8BjqT1kGx+27XNJRqBw
+ok4/phOawpFzR11M5q9FWhWB5Bsz0eV/FBPcpLUDHeY8MpxUdAIoDPrZ9nbv4APbFDzmOJCS0AEa
+YIg6I4JLv4JecV8ucE5I1M7mK8qf4YxxuM9p2pWyg3xEGPAG0ZvMsQLSNH7AsnViBObeW0SHw6E2
+dRoeReT3wkPUYTCXv/Jjb4pG55OHDiG+2ObSrlufjOoOsLwyoGNjbtxDW7HAG9jfOYcsY0iJQYRJ
+UnjxPqkJ+Xsd/MU98/18SkVzgN4Gin2iZzPOdJnX9O/OZJDBkQkts7JevPo3qLBdgPnPK6kthGur
+NZOp2xGqA5mE8Llt9fiF6x6um7FTb1Jbbn2ZegpLJ7eLRctZI19zTD1UA7mwCYQDh/xNIG1qS1xM
+n34XotRp6b2JX+LV7Mh9+97WPYfqtiv9WV0LFT+QQSV3FFW4XBSoFFplpDvhihDkitoN/zQ+Af2b
+GBV9I6jJ3RGRtiIZNsUThpCko2xlAltHZiY2gnUViElbnXORvnlcH+pAxE6gdJ1NOQ+gA2NSYBtI
+mPjYysN0MLaOHE5PeM+INogIkBX3ZBcPD5Z77ZMG+rPuN/J51fIEPFmPT3iJXQACrhZ5XRjMeT3R
+AozF1BhYg2JJHkHTHQ4xK2Imi8993Gq9KLpeJt+Yw+tIHLs9RdrnNjQX2iW2e8q8/YMXTZ0ahxfR
+gcp3umQGq6b6jj8kYGLPTxxmt+OZLd2dWXBxPpuCsydTUSbrFq4qNbkB0PpuwYAcWSecOhxJZO0A
+RtoxB22Ue20PyhR2stHybVk2RZ0AXel8I+1wY8Dfwv3U5K7eBToxe/torHkUqjuEIst2wuSYzxRB
+8k1m2OWD/6dijAUxjb3BiXds7zgy/y9SQb0RgWdTl9GraJVPB5/Mo7HhQNsTg7Yb31/dR5w5sPLv
+bi/vaeQkYVoBHXGwZ2NjXnCuNSxUx4abE8I/UYETsKjHuzqFEiAsjnH78pJ+u4ytl+ahXZwB5y8b
+oNblrOSmC1DW8hey5S0xpJ6W7KWJQ5oEtDmIwfL/xJ2+3j9sfTpZl8VaCP/FItfosPV6SkxYVA4z
+1D8DhHVYI7qa9DdAHYz/dcpl7UCE7XC5Nn9bqF5Micjyu09OpRr8AZ/AmX0TTx7O9SGMUzs7pbDI
+monvONsQZOQoIGBdXZ4+/zU/urRh0aVmBh1RE49IYW9jVb7CAcGq9agK+FBNWSqPiBoYEjU+/+Jd
+NFYV6tLd+GNyMVWoq3JKCeF0pYD3IuZ9qLTuC9D1uuHUoSMmtgJ4F0cxvokmCh3BMG98we4Bktgd
+rvMPrFPFYbBamgfFm0sDuBlHxVQ3ks8Vj8UOMjZslcHCTUIf7xuvU+Y91M/ZxgKbawBX5H/cNStQ
+hJXCeElHTKcO9HPvR4xGrSs7fekqQLQU5ODEegfS1+IEvcRS9Rz4+2ywqZzdS2uyuFdUWi/Ub+8V
+wDLTBoS6dqGK1vhNi+iQXYMmcTo2uE+7quM6OGA2PyoTyrB5IMoFH1tTo4JefHRVSvSUhZ3kaJF+
+5NnyeIiFdHVS5CmFem1BHQrf29MB5wscsPZdgZggHHtDiJgCyAR5x1L7XcM0uqnq1j0U+ZEJcbgp
+mOcimPzpraFUyaqSlkxh292xKffHjgqjjuatL//rpP2KYW2Vq4Dt9N4WYossPd/cc6UQPW5v2dsU
+HgcCafkAFqw6oh8IvCk/smKqOZDCtD5FtWt5Xrgc52/I78ARFDBeL7PPUzuL4umM0w4fMViP9jAN
+n9kJ/DljZ65d/ewvPX3EiGaAuHvY0n7SbU6lCKNULgHjQ94pj+/qTBUuLSxYyfcWNmETTmi/4DvY
+ENpsTP+PZGnM8zbFym1lUG0Ceot2ZC+Ele57ZF676A5S15EextHgBgHMLSri+acCsLVOafCrp+Gx
+7rnOLgWbO3AE1vbe8OqLGQd08BBaGnbCArlKXFD3FNJA1bDZey8ikdZGDHEvs7vCHPBiMGcjdkCc
+oHz/O4Si6crXSapZBMFhBXFUCYOvz8DFe8zaV5UbJBs7i7m+DF+/2RN2uQuGEbn6GySXzWHkER5k
+SRc2moYFkz6g8BGrXTJcg7ICdFBVE9Spu8plbvNf20v9NHKPuj0OCq07Df623J6zT/+ucd1HAm4f
+ErlM1j0RVmWG9X0FfgXkJqp8eeKrzU9ByPErvlLa8RCraw7TOSaxbAKm2U0ATcRSYqljH94KbABA
+ksWOFXWejeuuLHtq6EbrEcpm22IGHfkU7UHQqC+cdUDNq9Uv+peLruAZTzQxKHTi0hwD45ZEdckL
+xeIckeePRplkHpFtVvQG3cYovlrIRSjFOZp++4UoM+4i+oCZvD06q0wZKGyBoASPCZU1q7wQTruA
+yfCz5YZBiTHZINo0MJ+gfHndDpfZAJ29KZGnsqPB4RoxB753brxG+tl4guVY2TDFl2kx3zlTL804
+zpQW0CLVqFgFEV7iSu9e2TKiNo7GW8Co4fm1IWlaff1N836+YFOEvDw7aZv/47+S7sUJAW60Qlbl
+WDQhCartSqUcKBi70DyoOFpkaRM6bb8eXql3wOagxra/7g7qOLUpidpNB/783FQ96IgD45bmXxrf
+mGx+miEFUE7ly5VUlIM9CWczWC1YIK7OgjU7o+tY7E3AxSl8qccFSdsPq3F5Bcoam1DofQx8+UNT
+qHKEgHLBbCQ8/3PBS/yusvi0VCaG2r+T941Av7ohWg+9G3yZOhZT8dRezpRWQnEyEhitr3w3ttVF
+e03kBOWuXU3ExwJijQbcOaQuDgJmjgLloa99Sc1cewq2P8h7zU/xONzN6gGYeb/cXPFGcEJeI+aA
+60l65CuaHd3k/uqY6iwonyGC7Rs3qNDI7u59LRjzZZN1XFf3kb9mcyRl7Ny/lJWyzDws2e2btvIM
+yY3Wji9exf0hfyb8ygZ5GBnQtau7BXBndGEVVscZQ+uDVXBQ9hxs07Z0qB4NR69vqnXzxJ7l0mia
+vd82gQs00o8gfIvauj6wjCpBdpo0x1FWc4X2o8wQif/eSXMVygg72daYfnHRzQvISOiKq6gBki0z
+hvmiSdNQjUDjV5eDGoHBNExboZUkDfOlauFhQj6AZtWJTCaGBARqwbtLRRXC7SIw0YzqVaT11qCl
+6v6s6b28i3c6/8WmrcNElf0XoEaTV6nWTB2pQ+P+CylvE2RcaleRATQRHxWvpIojLhkaBLfrJQSY
+rEpsN+Th+X7DcmyySLbx3MYp2immOvXNvZAMU11PHNpc24ttTA/gAAAALhEMhQVJ7Zp4JvPXpK6W
+DZPiJrmPdq8au9+YdEPaSpj9t7sfSYnG0vX860dvoSA6GCwZWF/+SxlbnYbGxhX9Ut64ipEN33k4
+Gn4Me5yydtXBGNPl4mKz8TN821nV3b2/xsrUCu7WTOQF8QB04yrU8XZNtiAiJSXHwSXhGbkMzkSr
+JvIZ325ZkQ3wbY6fe+dAuB8xj2Zk2F7TutytF+DlNOH7UI1IbGzwjP0UK0HUqnA2CBLO6wddHzCF
+o2beunmYxT59hW1gDYZFbOKtHSdJUUK0T3/3hPUw1sJRbOL5SBwIR/W7uICVLk5kwZuu5DAP/Kab
+dTXdBHbZXaJCQlkvyFPJlU1H24q0xkJtfR0ny8ucvqnXfR/uw6HPmby1aQ6HRM70KUyr8S8yTN8K
+tPGbrDFiWOkNx+R38oKmCJo+ESgjHw/M68XH0YdRX9yI69t9IWutrZNKXG6eWthI3+P7GwdtSVHg
+3QwGnM64bew5CbvEh0QholAcE5HvOzEgyUABW9iK9MRQMGsAIGYiCYAEWKcwezQkxjvaHL3a7TsN
+Bmr537skSJr0/We/pUBUOM6qVD/0ZXk0YqmpQSEu4rzA+G9sJWUKThUphBkg+Os7ugpO+/WK+/q0
+JVdxsSiMLiSt7eRbudfDv2vb30ffR7CeYLE5vH53H/yEd+eelzPRrerwzHL5vmOhZZ39ADDlyDpI
+Ls/VvRemlWOKMz2fq9YCCgV4InzSoEgx4WsNhJrDD3qAqdY59OW2CCIfKrF1dNnqXLgAAAAAHGVb
+YzKRyAnDDUNfXBVT6qFX/2a+3a3LzvTJHJCA9mSoRB4FFz7KzVgwmGjnQPO476xUjJDfPwI2vQTh
+43Lc9JU9jlTpnEP/MeKl2iQ99Z+p6pnxV/WXgINhzDMSmmu5jSizXS1IZgwWuPaIZNDcqdiVaACQ
+1NYlQ+DMIn4UUTu6baOdZ+bUGG4iW9gb5QcDnMwwqhY9o49iRM4kV/sMbh/OhPGozDukVBdFho1P
+syWzNnF4sEE1GSezzDDKp4weZ18qjiR8RXeqVpUyl7iOYysTKseqDUyxPV30a47lgjNL46HwPlvh
+/x+H72BMEM6lUjevQIx55aWYPvWHdcrIRXUZsGaFQuxGqE199TWYpG50OWkrVt5WLNH6P2/7Id4r
+yFtJFXCmIjCoYoFAYpb/n3OqTRsmCbhTwQFW0zeoqFbGx7YUVZzBWfgFPINBixyclZllXgsp+V+1
+T1M+9iWlOfXtjhZnfDEkWlAIHoh+Zkr2K8LnPZ94DRdaU90ZP7XX6VY3moYVltnUS+cEc0dYIokk
+ms4tg79DlXrUjWfKtRPPqXfw8AAAAAAx32pDoyRlm+2eNObs1kRca6UlWT1LuGj+C9ulDLxeJlqO
+Q8FS1E0iX3BwORCdrjWNYbSL1HogTd+SQHP8kKit/XMdg4pq4Ty2+gex/kcNF4NGOyesYR79/NtS
+bgS81ssGAr66cA1VMAzvyTWJ9kCdpz6h5l/f0yOg7I6iJjDmmB/X2I1Z+XW9cSihSKojBQ25PIhH
+huPEmwJvCcfTUaNLnq+rWH5fz0LkX2QPsXpo0a80A818vL2YWn2hlGCrUuUgsJChQHhDovg5yehl
+mCWHrn5+MzSaVpg8H9NceqgLc4Puv9ygEVWsP49zWmre3IQl3o2f+E1YOGrSqJv/wFbLCVrn8jJE
+lR3/myS9+k/7UhnNj3/nqmLjWFfEvRShn0ezD4GJ//zjUzQ6RK0qYp7AinPYji2upb5bV/JycWD+
+eRCOU5mFLieGFPC0sr/U2KVsfBE6t8fDK+0mV7eKp4fLWvPhFfo6XzquXR/F724q9//YcSr0FAbB
+A/88lAFhjb9BMas3552FbuN3MwTZtUxhnFjrRymQV1rI0Uqnfgq5+SHrBngjZJWSK72JK104DjLT
+Pqq6N0IDXtFomRL3iRMhMpxtj7Np8CYwWDVIKFaabMRSX51XhnLC3qNoPJvP0az61FtRsfyCRBOF
+YpITOm6i7hVEr64dgAAAAAB+2i8ABTTLxv/pkX8fWuGyqO7OgWDx2Zhgdnd12btUAPgKEs22KTzU
+CVRVkcFAG05zhJF3Y03ActCxeOJbgArl5R5UHSxR3vJ0SJNeGy3mhA7g7vRp/1HZTUCt6/Hflxl9
+gfZR+8njP/A/J91Kl7LAizevNCdLrsNeeEvrgs04+XI2UaXJzp/KsX5A+X9oXonwETLvPGabsYPo
+D0r4M5+nMSsLYrpTCA/O9dsSbUzHpzEIAtab6cf1m4/OutRezlhCX+5/Lcx89Z90y0jJKGm6Rsk9
+UpBhTG6rUP2VXiLdBV5UgjcZ7nW41hC4lCjToOHTSHNUG1WZzrI/RkIZrkHCWAG5jMBL2rdtmI/a
+qhYSufo4KEYUzuwDxopqS88GAQCl2aUdzfL6K4lnLh1rfWlIa0uXKqy2+XNNYXoIiq7JAgwFRyVD
+8kci5v4Rv3mjkjnBXBp8FK69Lyc5e4Drgio4IgijK6/Md9Akicw1Qq/LRx5qrd898Z2VrdvjLAeN
+rNYVVVBe1pvVSU0/sLuTcd9Q9mGGHiTmohnobPtDUSeszZbtRgs/i9656hyS+jcs41NA1H+182De
+umGA3QnxvEVlHQkW6RFM4YpuKOevugXKUzv9Jcg8APth3cm8o+zxwqOk0DRf2wXw1dyLIk3rF7Yz
+uHkym3Ax8VHumlTZR7QyTurzVYUVoFtXXQAAAAABscDjy5ELZfBmo8Od7hME4bCHLMabB4X8+0Yf
+BQ0LY0C3EHE0ecMrGYq+u8RAvfr7UqteFd2UMobrMP6olPi6eL5E7xpRlf37qoAkqwmkmh+rrWtz
+CscGBeXVlqw/vV5myJd1unLTH1XPztKRkyWd6gzh0Ite2+ADSTCNk6hSQwrgK3uGbQf+DUoeFTZf
+FpxlaswtuTO25h18qr9DvmTY2XaPQ/a9IWxrS4YfCqfCFeX35VzxZ4FlR5fYAMHstp/Jl0q/gjrW
+/r7UxfoOtPGI86A5jK3NWx6Y7meLcGkW7eq5bQuLJQHCyUmXPCmcYbiGoRPg5LgFKzYaJ9s3Z/dE
+rxz2AlKQ2+or/JuFMtdqCqP9eJjaHqNtPcYZ3gt6uods8z6Yk0ovsYZ+OlB6kopza0gL9lgrYZ9o
+AY16rbEubagqP7y/JM75aFU46fCR1q0rl7nCapDnF7dcAAAAAAAAUlR4yu5ITrlXMpmeXSZSCKJO
+l9/tAlStkpGjA0EFY9+kzZnLDuHQaNYf+dYQmLCaARBqcO8/WLcULETe3LUNfn3lB5xsV+2Adin4
+r/2u53S7KZuCdiQB8J9PsyoGq/qAtkS51XSfnoFiQsqX0VCdBL41uKnlROUHTrxLiNMIpYoc+RtJ
+TKFitkZvwn/Q9xVKViORtPhlKSG/k/B4gvg4mVUws7NlQHdL9h3cjWkDbOb9S3H0ks3KRPeEJ+2l
+tCAkvsnG7HFLtPkkzJBIuRKTVURdLWcDjG/i/CB4NImbttgYTZNfCh4gqnYQRg1vR5yzseeM2tRV
+sAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" 
+                     alt="Lizarte Logo" 
+                     class="lizarte-logo"
+                     id="lizarteLogo">
+                <h1>Automechanika Shanghai 2025</h1>
+            </div>
+            <p>Lizarte - Gestión de Visitas</p>
+            <p class="made-by">Made by Krumenaker!</p>
+            <button class="header-save-btn" onclick="manualSave()">💾 Guardar</button>
+            <div class="backup-status" id="backupStatus">✓ Guardado</div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Resumen</button>
+            <button class="tab" onclick="switchTab('confirmed')">✅ Confirmada</button>
+            <button class="tab" onclick="switchTab('pending')">⏳ Pendiente</button>
+            <button class="tab" onclick="switchTab('meetings')">🤝 Reuniones</button>
+            <button class="tab" onclick="switchTab('additional')">➕ Adicionales</button>
+            <button class="tab" onclick="switchTab('route')">🗺️ Ruta</button>
+            <button class="tab" onclick="switchTab('export')">📤 Exportar</button>
+        </div>
+        
+        <div id="overview" class="tab-content active">
+            <h2 style="margin-bottom: 20px; color: #2d3748;">📊 Resumen General</h2>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+        
+        <div id="confirmed" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">✅ Ruta Confirmada (43 expositores)</h2>
+            <p style="color: #4a5568; font-size: 13px; margin-bottom: 15px;">🗺️ Ordenados por Hall y Stand (ruta óptima)</p>
+            <div class="filter-bar">
+                <select id="filterPriority" onchange="renderExhibitors()">
+                    <option value="all">Todas las prioridades</option>
+                    <option value="high">🔴 Alta prioridad</option>
+                    <option value="medium">🟡 Media prioridad</option>
+                    <option value="low">🔵 Baja prioridad</option>
+                </select>
+                <input type="text" id="searchConfirmed" placeholder="🔍 Buscar expositor..." oninput="renderExhibitors()">
+            </div>
+            <div id="confirmedList"></div>
+        </div>
+        
+        <div id="pending" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">⏳ Ruta Pendiente (42 expositores)</h2>
+            <div class="filter-bar">
+                <input type="text" id="searchPending" placeholder="🔍 Buscar expositor..." oninput="renderExhibitors()">
+            </div>
+            <div id="pendingList"></div>
+        </div>
+        
+        <div id="meetings" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">🤝 Reuniones Programadas</h2>
+            
+            <div class="company-form">
+                <h3 style="margin-bottom: 15px; color: #2d3748;">Crear Nueva Reunión</h3>
+                <div class="form-group">
+                    <input type="text" id="meetingCompany" placeholder="* Empresa">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="meetingPerson" placeholder="* Persona de contacto">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="meetingProduct" placeholder="* Producto que ofrecen (Ej: Turbos, EGR, Filtros...)">
+                </div>
+                <div class="form-group">
+                    <input type="time" id="meetingTime" placeholder="* Hora">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="meetingStand" placeholder="Stand (opcional, Ej: Hall 2.1 - A51)">
+                </div>
+                <button class="btn btn-visited" onclick="createMeeting()" style="width: 100%;">🤝 Crear Reunión</button>
+            </div>
+            
+            <div id="meetingsList" style="margin-top: 25px;"></div>
+        </div>
+        
+        <div id="additional" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">➕ Empresas Adicionales</h2>
+            <div class="company-form">
+                <h3 style="margin-bottom: 15px; color: #2d3748;">Añadir Nueva Empresa</h3>
+                <div class="form-group">
+                    <input type="text" id="newCompanyName" placeholder="Nombre de la empresa">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="newCompanyPerson" placeholder="Persona de contacto">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="newCompanyPosition" placeholder="Cargo (opcional)">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="newCompanyEmail" placeholder="Email (opcional)">
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="newCompanyPhone" placeholder="Teléfono (opcional)">
+                </div>
+                <div class="form-group">
+                    <textarea id="newCompanyComments" placeholder="Notas o comentarios..."></textarea>
+                </div>
+                <button class="btn btn-visited" onclick="addCompany()" style="width: 100%;">➕ Añadir Empresa</button>
+            </div>
+            <div id="companiesList"></div>
+        </div>
+        
+        <div id="route" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">🗺️ Ruta Planificada</h2>
+            <div id="routeContent"></div>
+        </div>
+        
+        <div id="export" class="tab-content">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">📤 Exportar Datos</h2>
+            
+            <div class="export-buttons">
+                <button class="export-btn" onclick="exportJSON()">
+                    📋 Exportar JSON (Backup Completo + Fotos Reuniones)
+                </button>
+                
+                <button class="export-btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" onclick="downloadMeetingPhotos()">
+                    📷 Descargar Fotos de Reuniones
+                </button>
+                
+                <button class="export-btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);" onclick="downloadAllPhotosZIP()">
+                    📦 Descargar ZIP con TODAS las Fotos
+                </button>
+                
+                <button class="export-btn" onclick="exportDailyReport()">
+                    📝 Informe Diario (Word con fotos)
+                </button>
+                
+                <button class="export-btn" onclick="exportCompleteWord()">
+                    📑 Informe Completo (TODOS los 85 stands)
+                </button>
+                
+                <button class="export-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" onclick="copyReportToClipboard()">
+                    📋 Copiar al Portapapeles
+                </button>
+                
+                <button class="export-btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);" onclick="showReportInModal()">
+                    👁️ Ver Informe en Pantalla
+                </button>
+            </div>
+            
+            <p style="margin-top: 15px; padding: 15px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 8px; font-size: 13px; color: #92400e;">
+                <strong>💡 Para OneNote:</strong><br>
+                1. Usa "📋 Copiar al Portapapeles" (incluye TODOS los 85 stands)<br>
+                2. Abre OneNote y crea una página<br>
+                3. Mantén presionado y selecciona "Pegar"<br>
+                <br>
+                <strong>📋 El informe incluye:</strong><br>
+                • 43 expositores confirmados (organizados por Hall)<br>
+                • 42 expositores pendientes<br>
+                • Estado de cada uno (✓ Visitado / ☐ Pendiente / ✗ No interesa)<br>
+                • Ubicaciones, prioridades, contactos y notas<br>
+                <br>
+                Si "Copiar" no funciona, usa "👁️ Ver en Pantalla" y copia manualmente.
+            </p>
+            
+            <div class="import-section">
+                <h3 style="color: #c53030; margin-bottom: 10px;">⚠️ Importar Datos</h3>
+                <p style="color: #742a2a; font-size: 13px; margin-bottom: 15px;">
+                    Esta acción sobrescribirá todos los datos actuales
+                </p>
+                <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px;">
+                <button class="btn btn-not-interested" onclick="importFromJSON()">
+                    📥 Importar desde JSON
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // SISTEMA INDEXEDDB PARA FOTOS
+        // ═══════════════════════════════════════════════════════════
+        
+        let photoDB;
+        const DB_NAME = 'AutomechanikaPhotos';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'photos';
+        const MAX_PHOTOS_PER_STAND = 3;
+        const STORAGE_LIMIT_MB = 50;
+        
+        // Inicializar IndexedDB
+        async function initPhotoDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                
+                request.onsuccess = () => {
+                    photoDB = request.result;
+                    console.log('✅ IndexedDB inicializada');
+                    resolve(photoDB);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                        console.log('📦 Object Store creado');
+                    }
+                };
+            });
+        }
+        
+        // Guardar foto en IndexedDB
+        async function savePhotoToDB(key, photoData) {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put({ id: key, data: photoData });
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Obtener fotos de IndexedDB
+        async function getPhotosFromDB(key) {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(key);
+                
+                request.onsuccess = () => {
+                    resolve(request.result ? request.result.data : []);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Eliminar foto de IndexedDB
+        async function deletePhotoFromDB(key) {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(key);
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Obtener tamaño total usado en IndexedDB
+        async function getDBSize() {
+            return new Promise((resolve, reject) => {
+                const transaction = photoDB.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    let totalSize = 0;
+                    request.result.forEach(item => {
+                        if (item.data && Array.isArray(item.data)) {
+                            item.data.forEach(photo => {
+                                totalSize += photo.length * 0.75; // Aproximación base64
+                            });
+                        }
+                    });
+                    resolve(totalSize);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // Migrar fotos antiguas de localStorage a IndexedDB
+        async function migrateOldPhotos() {
+            console.log('🔄 Migrando fotos antiguas...');
+            let migrated = 0;
+            
+            for (const key in appState.details) {
+                const details = appState.details[key];
+                if (details.photos && details.photos.length > 0) {
+                    try {
+                        await savePhotoToDB(key, details.photos);
+                        migrated += details.photos.length;
+                        console.log(`✅ Migradas ${details.photos.length} fotos de ${key}`);
+                    } catch (error) {
+                        console.error(`❌ Error migrando ${key}:`, error);
+                    }
+                }
+            }
+            
+            if (migrated > 0) {
+                console.log(`✅ ${migrated} fotos migradas a IndexedDB`);
+                // Limpiar fotos de localStorage después de migrar
+                for (const key in appState.details) {
+                    if (appState.details[key].photos) {
+                        delete appState.details[key].photos;
+                    }
+                }
+                saveToLocalStorage();
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // ESTADO DE LA APLICACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        let appState = {
+            visits: {},
+            notInterested: {},
+            details: {},
+            companies: [],
+            meetings: []
+        };
+        
+        let saveTimeout;
+        let backupInterval;
+        
+        // ═══════════════════════════════════════════════════════════
+        // DATOS DE EXPOSITORES
+        // ═══════════════════════════════════════════════════════════
+        
+        const exhibitorsData = {
+            confirmed: [
+                { name: "Amico", location: "Hall 2.1 Stand A51", priority: "high" },
+                { name: "Hangzhou Goldenfly Auto Parts", location: "Hall 2.1 Stand A62", priority: "high" },
+                { name: "Taizhou Joyoung Axle Co. Ltd.", location: "Hall 2.1 Stand B11", priority: "high" },
+                { name: "KYB (Europe)", location: "Hall 2.1 Stand B38", priority: "high" },
+                { name: "ZF Active Safety & Electronics US LLC", location: "Hall 2.1 Stand B50", priority: "medium" },
+                { name: "ZF Aftermarket", location: "Hall 2.1 Stand B50", priority: "high" },
+                { name: "ZHEJIANG TONY TECHNOLOGY CO., LTD.", location: "Hall 2.1 Stand C12", priority: "high" },
+                { name: "Zhejiang Asia-Pacific", location: "Hall 2.1 Stand C17", priority: "low" },
+                { name: "Hangzhou Kefeng Auto Parts Co., Ltd.", location: "Hall 2.1 Stand C67", priority: "high" },
+                { name: "Zhejiang Xianglai Casting Co., Ltd.", location: "Hall 2.1 Stand D05", priority: "medium" },
+                { name: "Marelli Parts", location: "Hall 2.1 Stand D13", priority: "high" },
+                { name: "Zhejiang Wanda Automotive Steering System Co., Ltd.", location: "Hall 2.1 Stand D19", priority: "high" },
+                { name: "Huzhou Tuofeng Auto Electrical Appliance Co., Ltd.", location: "Hall 2.1 Stand D29", priority: "high" },
+                { name: "FTE automotive", location: "Hall 2.1 Stand D48", priority: "high" },
+                { name: "Wanxiang Qianchao Co., Ltd.", location: "Hall 2.1 Stand E01", priority: "high" },
+                { name: "Nexteer Automotive", location: "Hall 2.1 Stand E14", priority: "high" },
+                { name: "Zhejiang VIE Science & Technology Co., Ltd.", location: "Hall 2.1 Stand E21", priority: "high" },
+                { name: "Wuhu Yilite Auto Parts CO., Ltd.", location: "Hall 2.1 Stand E22", priority: "high" },
+                { name: "Bosch", location: "Hall 2.1 Stand E35", priority: "high" },
+                { name: "Zhejiang Yinlun Machinery Co., Ltd.", location: "Hall 2.1 Stand F01", priority: "high" },
+                { name: "CENS", location: "Hall 3.1 Stand A34", priority: "low" },
+                { name: "China Int'l Hardware Show", location: "Hall 3.1 Stand B01", priority: "low" },
+                { name: "Autofact (Malaysia)", location: "Hall 4.1 Stand A26", priority: "low" },
+                { name: "Valeo Service Deutschland GmbH", location: "Hall 4.1 Stand A49", priority: "high" },
+                { name: "Valeo Siemens eAutomotive", location: "Hall 4.1 Stand A49", priority: "high" },
+                { name: "SKF (China) Co., Ltd.", location: "Hall 4.1 Stand B01", priority: "high" },
+                { name: "Magneti Marelli Aftermarket", location: "Hall 4.1 Stand B70", priority: "high" },
+                { name: "Dayco Europe", location: "Hall 4.1 Stand E01", priority: "high" },
+                { name: "Rheinmetall Automotive", location: "Hall 4.1 Stand F01", priority: "high" },
+                { name: "Schaeffler", location: "Hall 5.2 Stand A01", priority: "high" },
+                { name: "Textar", location: "Hall 5.2 Stand B17", priority: "high" },
+                { name: "Nissens", location: "Hall 5.2 Stand B29", priority: "high" },
+                { name: "Federal-Mogul Motorparts", location: "Hall 5.2 Stand C01", priority: "high" },
+                { name: "Delphi Technologies", location: "Hall 5.2 Stand C01", priority: "high" },
+                { name: "TMD Friction", location: "Hall 5.2 Stand C41", priority: "high" },
+                { name: "Hella", location: "Hall 5.2 Stand D01", priority: "high" },
+                { name: "Tenneco Inc.", location: "Hall 5.2 Stand D20", priority: "high" },
+                { name: "Meyle AG", location: "Hall 5.2 Stand D44", priority: "high" },
+                { name: "Lemfoerder", location: "Hall 5.2 Stand E10", priority: "high" },
+                { name: "Gates", location: "Hall 5.2 Stand E28", priority: "high" },
+                { name: "Bilstein", location: "Hall 5.2 Stand F50", priority: "high" },
+                { name: "MANN+HUMMEL GmbH", location: "Hall 6.2 Stand B75", priority: "high" },
+                { name: "Sogefi", location: "Hall 6.2 Stand B80", priority: "high" }
+            ],
+            pending: [
+                { name: "Shandong Hengyu Auto Parts Co., Ltd.", priority: "medium" },
+                { name: "Hangzhou Jielong Transmission Machinery Co., Ltd.", priority: "medium" },
+                { name: "Wenzhou Jiangnan Pulley Manufacture Co., Ltd.", priority: "low" },
+                { name: "Hefei Bolin Advanced Materials Co., Ltd.", priority: "medium" },
+                { name: "Shanghai Fengshen Autoparts Co., Ltd.", priority: "high" },
+                { name: "Zhejiang Ruili Industrial and Trading Co., Ltd.", priority: "medium" },
+                { name: "Yinlun Refrigeration Equipment Co., Ltd.", priority: "medium" },
+                { name: "Huzhou Tuofeng", priority: "medium" },
+                { name: "Huzhou Tuofeng Auto Electrical Appliance Co., Ltd.", priority: "medium" },
+                { name: "Thai Summit PKK", priority: "medium" },
+                { name: "BBB Industries", priority: "medium" },
+                { name: "Metelli", priority: "high" },
+                { name: "Sanmak Automotive", priority: "low" },
+                { name: "Akebono Brake Industry Co., Ltd.", priority: "high" },
+                { name: "Zhejiang Sanhua Automotive Components Co., Ltd.", priority: "medium" },
+                { name: "Tong Hwei", priority: "low" },
+                { name: "Yuh Jaan Enterprises Co., Ltd.", priority: "medium" },
+                { name: "Fu Ta Quan", priority: "low" },
+                { name: "T. M. Hung Enterprise Co., Ltd.", priority: "low" },
+                { name: "UNA Autoparts Manufacture Co., Ltd.", priority: "low" },
+                { name: "Chia Feng Enterprises Co., Ltd.", priority: "low" },
+                { name: "NTN", priority: "high" },
+                { name: "Koito Manufacturing", priority: "medium" },
+                { name: "JTEKT Corporation", priority: "high" },
+                { name: "NSK", priority: "high" },
+                { name: "AISIN", priority: "high" },
+                { name: "DENSO", priority: "high" },
+                { name: "Stanley Electric", priority: "medium" },
+                { name: "Showa Corporation", priority: "medium" },
+                { name: "Continental", priority: "high" },
+                { name: "Mahle", priority: "high" },
+                { name: "Behr-Hella Thermocontrol GmbH", priority: "high" },
+                { name: "Pierburg", priority: "high" },
+                { name: "Kolbenschmidt", priority: "medium" },
+                { name: "UFI Filters", priority: "high" },
+                { name: "Magneti Marelli Parts & Services S.p.A.", priority: "high" },
+                { name: "Brembo", priority: "high" },
+                { name: "Sachs", priority: "high" },
+                { name: "LUK", priority: "high" },
+                { name: "INA", priority: "high" },
+                { name: "FAG", priority: "high" },
+                { name: "Lemfoerder (TRW Automotive)", priority: "high" },
+                { name: "BorgWarner Inc.", priority: "high" }
+            ]
+        };
+        
+        // ═══════════════════════════════════════════════════════════
+        // SISTEMA DE GUARDADO Y RECUPERACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        function saveToLocalStorage() {
+            try {
+                const dataStr = JSON.stringify(appState);
+                
+                // Backup antes de guardar
+                const existingData = localStorage.getItem('automechanika_data');
+                if (existingData) {
+                    localStorage.setItem('automechanika_backup', existingData);
+                    
+                    // Backup secundario aleatorio
+                    if (Math.random() < 0.2) {
+                        localStorage.setItem('automechanika_backup2', existingData);
+                    }
+                }
+                
+                // Guardar datos principales
+                localStorage.setItem('automechanika_data', dataStr);
+                
+                // Backup de emergencia en sessionStorage
+                sessionStorage.setItem('automechanika_emergency', dataStr);
+                
+                // Verificar que se guardó correctamente
+                const saved = localStorage.getItem('automechanika_data');
+                if (saved === dataStr) {
+                    updateBackupStatus('✓ Guardado');
+                    console.log('✅ Datos guardados correctamente');
+                } else {
+                    throw new Error('Verificación falló');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error al guardar:', error);
+                
+                // Intento de emergencia en sessionStorage
+                try {
+                    sessionStorage.setItem('automechanika_emergency', JSON.stringify(appState));
+                    updateBackupStatus('⚠️ Guardado emergencia');
+                } catch (e) {
+                    updateBackupStatus('❌ Error guardado');
+                }
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            try {
+                // Nivel 1: Datos principales
+                let dataStr = localStorage.getItem('automechanika_data');
+                
+                if (!dataStr) {
+                    // Nivel 2: Backup principal
+                    dataStr = localStorage.getItem('automechanika_backup');
+                    if (dataStr) console.log('🔄 Recuperado desde backup principal');
+                }
+                
+                if (!dataStr) {
+                    // Nivel 3: Backup secundario
+                    dataStr = localStorage.getItem('automechanika_backup2');
+                    if (dataStr) console.log('🔄 Recuperado desde backup secundario');
+                }
+                
+                if (!dataStr) {
+                    // Nivel 4: Emergencia sessionStorage
+                    dataStr = sessionStorage.getItem('automechanika_emergency');
+                    if (dataStr) console.log('🔄 Recuperado desde emergencia');
+                }
+                
+                if (dataStr) {
+                    const loaded = JSON.parse(dataStr);
+                    appState = loaded;
+                    
+                    // Asegurar que meetings existe (compatibilidad con versiones anteriores)
+                    if (!appState.meetings) {
+                        appState.meetings = [];
+                    }
+                    
+                    console.log('✅ Datos cargados correctamente');
+                } else {
+                    console.log('ℹ️ No hay datos previos');
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar datos:', error);
+                alert('⚠️ Error al cargar datos. Iniciando con datos limpios.');
+            }
+        }
+        
+        function updateBackupStatus(text) {
+            const status = document.getElementById('backupStatus');
+            if (status) {
+                status.textContent = text;
+            }
+        }
+        
+        function showSaveIndicator(type = 'saving', message = 'Guardando...') {
+            let indicator = document.querySelector('.save-indicator');
+            
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.className = 'save-indicator';
+                document.body.appendChild(indicator);
+            }
+            
+            indicator.className = `save-indicator ${type}`;
+            
+            if (type === 'saving') {
+                indicator.innerHTML = `<div class="spinner"></div> ${message}`;
+            } else if (type === 'saved') {
+                indicator.innerHTML = `✓ ${message}`;
+            } else if (type === 'error') {
+                indicator.innerHTML = `✗ ${message}`;
+            }
+            
+            indicator.style.display = 'flex';
+            
+            if (type !== 'saving') {
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // Guardado con debounce
+        function scheduleSave() {
+            clearTimeout(saveTimeout);
+            showSaveIndicator('saving', 'Guardando...');
+            
+            saveTimeout = setTimeout(() => {
+                saveToLocalStorage();
+                showSaveIndicator('saved', 'Guardado');
+            }, 800);
+        }
+        
+        // Guardado manual
+        function manualSave() {
+            showSaveIndicator('saving', 'Guardando...');
+            saveToLocalStorage();
+            showSaveIndicator('saved', '¡Guardado!');
+        }
+        
+        // Backup automático cada 5 minutos
+        function startAutoBackup() {
+            backupInterval = setInterval(() => {
+                saveToLocalStorage();
+                console.log('🔄 Backup automático realizado');
+            }, 300000);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // FUNCIONES DE FOTOS CON INDEXEDDB
+        // ═══════════════════════════════════════════════════════════
+        
+        async function handlePhotoUpload(event, key) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            
+            try {
+                // Obtener fotos existentes
+                const existingPhotos = await getPhotosFromDB(key) || [];
+                const remaining = MAX_PHOTOS_PER_STAND - existingPhotos.length;
+                
+                if (remaining <= 0) {
+                    alert(`❌ Límite alcanzado: máximo ${MAX_PHOTOS_PER_STAND} fotos por stand`);
+                    return;
+                }
+                
+                if (files.length > remaining) {
+                    alert(`⚠️ Solo puedes subir ${remaining} foto(s) más. Seleccionando las primeras ${remaining}.`);
+                }
+                
+                const filesToProcess = files.slice(0, remaining);
+                showSaveIndicator('saving', `Comprimiendo ${filesToProcess.length} foto(s)...`);
+                
+                const compressedPhotos = [];
+                
+                for (const file of filesToProcess) {
+                    try {
+                        const compressed = await compressImage(file);
+                        compressedPhotos.push(compressed);
+                    } catch (error) {
+                        console.error('Error comprimiendo imagen:', error);
+                    }
+                }
+                
+                if (compressedPhotos.length > 0) {
+                    const allPhotos = [...existingPhotos, ...compressedPhotos];
+                    await savePhotoToDB(key, allPhotos);
+                    
+                    // Actualizar UI
+                    renderExhibitorDetails(key);
+                    
+                    showSaveIndicator('saved', `${compressedPhotos.length} foto(s) guardada(s)`);
+                }
+                
+                event.target.value = '';
+                
+            } catch (error) {
+                console.error('Error al subir fotos:', error);
+                showSaveIndicator('error', 'Error al guardar fotos');
+                alert('❌ Error al guardar fotos. Intenta de nuevo.');
+            }
+        }
+        
+        async function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Redimensionar a máximo 800px (antes 1024px)
+                        const maxSize = 800;
+                        if (width > maxSize || height > maxSize) {
+                            if (width > height) {
+                                height = (height / width) * maxSize;
+                                width = maxSize;
+                            } else {
+                                width = (width / height) * maxSize;
+                                height = maxSize;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Calidad 60% (antes 70%)
+                        const compressed = canvas.toDataURL('image/jpeg', 0.60);
+                        
+                        const sizeKB = (compressed.length * 0.75) / 1024;
+                        console.log(`📷 Foto comprimida: ${Math.round(sizeKB)}KB`);
+                        
+                        resolve(compressed);
+                    };
+                    
+                    img.onerror = () => reject(new Error('Error al cargar imagen'));
+                    img.src = e.target.result;
+                };
+                
+                reader.onerror = () => reject(new Error('Error al leer archivo'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        async function deletePhoto(key, photoIndex) {
+            if (!confirm('¿Eliminar esta foto?')) return;
+            
+            try {
+                const photos = await getPhotosFromDB(key) || [];
+                photos.splice(photoIndex, 1);
+                
+                if (photos.length > 0) {
+                    await savePhotoToDB(key, photos);
+                } else {
+                    await deletePhotoFromDB(key);
+                }
+                
+                renderExhibitorDetails(key);
+                showSaveIndicator('saved', 'Foto eliminada');
+            } catch (error) {
+                console.error('Error al eliminar foto:', error);
+                alert('❌ Error al eliminar foto');
+            }
+        }
+        
+        async function downloadPhoto(key, photoIndex) {
+            try {
+                const photos = await getPhotosFromDB(key) || [];
+                const photoData = photos[photoIndex];
+                
+                if (!photoData) {
+                    alert('❌ Foto no encontrada');
+                    return;
+                }
+                
+                // Obtener nombre del expositor
+                let exhibitorName = 'foto';
+                if (key.startsWith('confirmed_')) {
+                    const index = parseInt(key.split('_')[1]);
+                    exhibitorName = exhibitorsData.confirmed[index]?.name || 'foto';
+                } else if (key.startsWith('pending_')) {
+                    const index = parseInt(key.split('_')[1]);
+                    exhibitorName = exhibitorsData.pending[index]?.name || 'foto';
+                }
+                
+                // Limpiar nombre para archivo
+                const cleanName = exhibitorName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                const fileName = `${cleanName}_${photoIndex + 1}_${Date.now()}.jpg`;
+                
+                // Convertir base64 a blob
+                const base64Data = photoData.split(',')[1];
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                
+                // Intentar compartir (mejor para iPhone)
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/jpeg' })] })) {
+                    try {
+                        const file = new File([blob], fileName, { type: 'image/jpeg' });
+                        await navigator.share({
+                            files: [file],
+                            title: 'Guardar foto',
+                            text: `Foto de ${exhibitorName}`
+                        });
+                        showSaveIndicator('saved', '✓ Foto guardada');
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            return; // Usuario canceló
+                        }
+                        // Si falla, continuar con descarga normal
+                    }
+                }
+                
+                // Descarga fallback
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                showSaveIndicator('saved', '✓ Foto descargada');
+                
+            } catch (error) {
+                console.error('Error al descargar foto:', error);
+                alert('❌ Error al descargar foto');
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // FUNCIONES DE UI
+        // ═══════════════════════════════════════════════════════════
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'overview') updateStats();
+            if (tabName === 'route') renderRoute();
+            if (tabName === 'additional') renderCompanies();
+        }
+        
+        function updateStats() {
+            const totalExhibitors = exhibitorsData.confirmed.length + exhibitorsData.pending.length;
+            const visited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+            const notInterested = Object.keys(appState.notInterested).filter(k => appState.notInterested[k]).length;
+            const pending = totalExhibitors - visited - notInterested;
+            const additional = appState.companies.length;
+            const meetings = appState.meetings.length;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <h3>${totalExhibitors}</h3>
+                    <p>Total Expositores</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h3>${visited}</h3>
+                    <p>Visitados</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <h3>${pending}</h3>
+                    <p>Pendientes</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <h3>${meetings}</h3>
+                    <p>Reuniones</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                    <h3>${additional}</h3>
+                    <p>Adicionales</p>
+                </div>
+            `;
+        }
+        
+        async function renderExhibitors() {
+            const filterPriority = document.getElementById('filterPriority')?.value || 'all';
+            const searchConfirmed = document.getElementById('searchConfirmed')?.value.toLowerCase() || '';
+            const searchPending = document.getElementById('searchPending')?.value.toLowerCase() || '';
+            
+            // Renderizar confirmados - AGRUPADOS POR HALL Y ORDENADOS POR STAND
+            let confirmedHTML = '';
+            
+            // Agrupar por hall
+            const hallsData = {};
+            exhibitorsData.confirmed.forEach((exhibitor, index) => {
+                const key = `confirmed_${index}`;
+                
+                // Aplicar filtros
+                if (filterPriority !== 'all' && exhibitor.priority !== filterPriority) return;
+                if (searchConfirmed && !exhibitor.name.toLowerCase().includes(searchConfirmed)) return;
+                
+                const hall = exhibitor.location.split(' Stand')[0];
+                const standNumber = exhibitor.location.split(' Stand ')[1];
+                
+                if (!hallsData[hall]) {
+                    hallsData[hall] = [];
+                }
+                
+                hallsData[hall].push({
+                    ...exhibitor,
+                    index,
+                    key,
+                    standNumber,
+                    isVisited: appState.visits[key],
+                    isNotInterested: appState.notInterested[key],
+                    hasDetails: appState.details[key],
+                    type: 'exhibitor'
+                });
+            });
+            
+            // Añadir reuniones con stand a los halls correspondientes
+            appState.meetings.forEach((meeting, index) => {
+                if (meeting.stand && meeting.stand.trim()) {
+                    // Filtrar por búsqueda
+                    if (searchConfirmed && !meeting.company.toLowerCase().includes(searchConfirmed)) return;
+                    
+                    const hall = meeting.stand.split(' Stand')[0] || meeting.stand.split('-')[0];
+                    const standNumber = meeting.stand.includes('Stand') ? meeting.stand.split(' Stand ')[1] : meeting.stand.split('-')[1];
+                    
+                    if (!hallsData[hall]) {
+                        hallsData[hall] = [];
+                    }
+                    
+                    hallsData[hall].push({
+                        name: meeting.company,
+                        location: meeting.stand,
+                        standNumber: standNumber || '',
+                        type: 'meeting',
+                        meetingIndex: index,
+                        meeting: meeting
+                    });
+                }
+            });
+            
+            // Ordenar por stand dentro de cada hall
+            Object.keys(hallsData).forEach(hall => {
+                hallsData[hall].sort((a, b) => {
+                    const standA = a.standNumber || '';
+                    const standB = b.standNumber || '';
+                    return standA.localeCompare(standB);
+                });
+            });
+            
+            // Renderizar por hall
+            Object.keys(hallsData).sort().forEach(hall => {
+                const exhibitors = hallsData[hall];
+                const visited = exhibitors.filter(e => e.isVisited).length;
+                const total = exhibitors.length;
+                
+                confirmedHTML += `
+                    <div style="background: #667eea; color: white; padding: 12px 15px; border-radius: 10px; margin: 20px 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 700;">${hall}</h3>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
+                            ${visited}/${total} visitados
+                        </span>
+                    </div>
+                `;
+                
+                exhibitors.forEach(item => {
+                    // Si es una reunión, renderizar con fondo amarillo
+                    if (item.type === 'meeting') {
+                        const meeting = item.meeting;
+                        confirmedHTML += `
+                            <div class="exhibitor-card meeting" onclick="openMeetingDetail(${item.meetingIndex})">
+                                <div class="exhibitor-header">
+                                    <div class="exhibitor-name">${meeting.company}</div>
+                                    <span class="meeting-badge">🤝 REUNIÓN</span>
+                                </div>
+                                <div class="meeting-time">🕐 ${meeting.time}</div>
+                                <div class="exhibitor-location">📍 ${meeting.stand}</div>
+                                <div class="meeting-person">👤 ${meeting.person}</div>
+                                <div class="meeting-product">📦 ${meeting.product}</div>
+                            </div>
+                        `;
+                    } else {
+                        // Renderizar expositor normal
+                        const exhibitor = item;
+                        let cardClass = 'exhibitor-card';
+                        if (exhibitor.isVisited) cardClass += ' visited';
+                        if (exhibitor.isNotInterested) cardClass += ' not-interested';
+                        
+                        let priorityClass = 'priority';
+                        let priorityText = '';
+                        if (exhibitor.priority === 'high') { priorityClass += ' high'; priorityText = '🔴 Alta'; }
+                        else if (exhibitor.priority === 'medium') { priorityClass += ' medium'; priorityText = '🟡 Media'; }
+                        else { priorityClass += ' low'; priorityText = '🔵 Baja'; }
+                        
+                        confirmedHTML += `
+                            <div class="${cardClass}" id="card_${exhibitor.key}">
+                                <div class="exhibitor-header">
+                                    <div class="exhibitor-name">${exhibitor.name}</div>
+                                    <span class="${priorityClass}">${priorityText}</span>
+                                </div>
+                                <div class="exhibitor-location">
+                                    📍 ${exhibitor.location}
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="btn ${exhibitor.isVisited ? 'btn-secondary' : 'btn-visited'}" 
+                                            onclick="toggleVisit('${exhibitor.key}')">
+                                        ${exhibitor.isVisited ? '✓ Visitado' : '☐ Marcar visitado'}
+                                    </button>
+                                    <button class="btn ${exhibitor.isNotInterested ? 'btn-secondary' : 'btn-not-interested'}" 
+                                            onclick="toggleNotInterested('${exhibitor.key}')">
+                                        ${exhibitor.isNotInterested ? '✓ No interesa' : '✗ No interesa'}
+                                    </button>
+                                    <button class="btn btn-details" onclick="toggleDetails('${exhibitor.key}')">
+                                        ${exhibitor.hasDetails ? '📝 Editar' : '➕ Detalles'}
+                                    </button>
+                                </div>
+                                <div id="details_${exhibitor.key}"></div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+            
+            document.getElementById('confirmedList').innerHTML = confirmedHTML || '<p style="text-align: center; color: #718096; padding: 40px;">No hay expositores que coincidan con los filtros</p>';
+            
+            // Renderizar pendientes
+            let pendingHTML = '';
+            exhibitorsData.pending.forEach((exhibitor, index) => {
+                const key = `pending_${index}`;
+                
+                // Filtrar por búsqueda
+                if (searchPending && !exhibitor.name.toLowerCase().includes(searchPending)) return;
+                
+                const isVisited = appState.visits[key];
+                const isNotInterested = appState.notInterested[key];
+                const hasDetails = appState.details[key];
+                
+                let cardClass = 'exhibitor-card';
+                if (isVisited) cardClass += ' visited';
+                if (isNotInterested) cardClass += ' not-interested';
+                
+                let priorityClass = 'priority';
+                let priorityText = '';
+                if (exhibitor.priority === 'high') { priorityClass += ' high'; priorityText = '🔴 Alta'; }
+                else if (exhibitor.priority === 'medium') { priorityClass += ' medium'; priorityText = '🟡 Media'; }
+                else { priorityClass += ' low'; priorityText = '🔵 Baja'; }
+                
+                pendingHTML += `
+                    <div class="${cardClass}" id="card_${key}">
+                        <div class="exhibitor-header">
+                            <div class="exhibitor-name">${exhibitor.name}</div>
+                            <span class="${priorityClass}">${priorityText}</span>
+                        </div>
+                        <div class="exhibitor-location">
+                            ⏳ Ubicación por confirmar
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn ${isVisited ? 'btn-secondary' : 'btn-visited'}" 
+                                    onclick="toggleVisit('${key}')">
+                                ${isVisited ? '✓ Visitado' : '☐ Marcar visitado'}
+                            </button>
+                            <button class="btn ${isNotInterested ? 'btn-secondary' : 'btn-not-interested'}" 
+                                    onclick="toggleNotInterested('${key}')">
+                                ${isNotInterested ? '✓ No interesa' : '✗ No interesa'}
+                            </button>
+                            <button class="btn btn-details" onclick="toggleDetails('${key}')">
+                                ${hasDetails ? '📝 Editar' : '➕ Detalles'}
+                            </button>
+                        </div>
+                        <div id="details_${key}"></div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('pendingList').innerHTML = pendingHTML;
+        }
+        
+        function toggleVisit(key) {
+            appState.visits[key] = !appState.visits[key];
+            if (appState.visits[key]) {
+                appState.notInterested[key] = false;
+            }
+            
+            // Actualizar solo este elemento
+            const card = document.getElementById(`card_${key}`);
+            if (card) {
+                if (appState.visits[key]) {
+                    card.classList.add('visited');
+                    card.classList.remove('not-interested');
+                } else {
+                    card.classList.remove('visited');
+                }
+                
+                const btn = card.querySelector('.btn-visited, .btn-secondary');
+                if (btn) {
+                    btn.className = appState.visits[key] ? 'btn btn-secondary' : 'btn btn-visited';
+                    btn.textContent = appState.visits[key] ? '✓ Visitado' : '☐ Marcar visitado';
+                }
+            }
+            
+            scheduleSave();
+        }
+        
+        function toggleNotInterested(key) {
+            appState.notInterested[key] = !appState.notInterested[key];
+            if (appState.notInterested[key]) {
+                appState.visits[key] = false;
+            }
+            
+            // Actualizar solo este elemento
+            const card = document.getElementById(`card_${key}`);
+            if (card) {
+                if (appState.notInterested[key]) {
+                    card.classList.add('not-interested');
+                    card.classList.remove('visited');
+                } else {
+                    card.classList.remove('not-interested');
+                }
+                
+                const btn = card.querySelector('.btn-not-interested, .btn-secondary');
+                if (btn) {
+                    btn.className = appState.notInterested[key] ? 'btn btn-secondary' : 'btn btn-not-interested';
+                    btn.textContent = appState.notInterested[key] ? '✓ No interesa' : '✗ No interesa';
+                }
+            }
+            
+            scheduleSave();
+        }
+        
+        function toggleDetails(key) {
+            const detailsDiv = document.getElementById(`details_${key}`);
+            if (detailsDiv.innerHTML) {
+                detailsDiv.innerHTML = '';
+            } else {
+                renderExhibitorDetails(key);
+            }
+        }
+        
+        async function renderExhibitorDetails(key) {
+            const detailsDiv = document.getElementById(`details_${key}`);
+            if (!detailsDiv) return;
+            
+            const details = appState.details[key] || {};
+            const photos = await getPhotosFromDB(key) || [];
+            const photoCount = photos.length;
+            const canAddMore = photoCount < MAX_PHOTOS_PER_STAND;
+            
+            let photosHTML = '';
+            if (photos.length > 0) {
+                photosHTML = '<div class="photo-grid">';
+                photos.forEach((photo, index) => {
+                    photosHTML += `
+                        <div class="photo-item">
+                            <img src="${photo}" alt="Foto ${index + 1}">
+                            <button class="photo-download" onclick="downloadPhoto('${key}', ${index})" title="Guardar en galería">💾</button>
+                            <button class="photo-delete" onclick="deletePhoto('${key}', ${index})" title="Eliminar">×</button>
+                        </div>
+                    `;
+                });
+                photosHTML += '</div>';
+            }
+            
+            detailsDiv.innerHTML = `
+                <div class="details-form">
+                    <div class="form-group">
+                        <label>⭐ Valoración</label>
+                        <div class="rating-stars" onclick="setRating('${key}', event)">
+                            ${[1,2,3,4,5].map(i => `
+                                <span data-rating="${i}">${i <= (details.rating || 0) ? '⭐' : '☆'}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏭 Productos de interés</label>
+                        <input type="text" value="${details.products || ''}" 
+                               oninput="updateDetail('${key}', 'products', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>👤 Nombre de contacto</label>
+                        <input type="text" value="${details.contactName || ''}" 
+                               oninput="updateDetail('${key}', 'contactName', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💼 Cargo</label>
+                        <input type="text" value="${details.contactPosition || ''}" 
+                               oninput="updateDetail('${key}', 'contactPosition', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" value="${details.contactEmail || ''}" 
+                               oninput="updateDetail('${key}', 'contactEmail', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📱 Teléfono</label>
+                        <input type="tel" value="${details.contactPhone || ''}" 
+                               oninput="updateDetail('${key}', 'contactPhone', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🕐 Hora de visita</label>
+                        <input type="time" value="${details.visitTime || ''}" 
+                               oninput="updateDetail('${key}', 'visitTime', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>💬 Comentarios</label>
+                        <textarea oninput="updateDetail('${key}', 'comments', this.value)">${details.comments || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group photo-upload">
+                        <label>
+                            📷 Fotos del stand
+                            <span class="photo-counter ${!canAddMore ? 'full' : ''}">${photoCount}/${MAX_PHOTOS_PER_STAND}</span>
+                        </label>
+                        <input type="file" accept="image/*" multiple capture="environment"
+                               ${!canAddMore ? 'disabled' : ''}
+                               onchange="handlePhotoUpload(event, '${key}')">
+                        ${!canAddMore ? '<p style="color: #ef4444; font-size: 12px; margin-top: 5px;">⚠️ Límite alcanzado. Elimina fotos para añadir nuevas.</p>' : ''}
+                    </div>
+                    
+                    ${photosHTML}
+                </div>
+            `;
+        }
+        
+        function updateDetail(key, field, value) {
+            if (!appState.details[key]) {
+                appState.details[key] = {};
+            }
+            appState.details[key][field] = value;
+            scheduleSave();
+        }
+        
+        function setRating(key, event) {
+            if (event.target.dataset.rating) {
+                const rating = parseInt(event.target.dataset.rating);
+                updateDetail(key, 'rating', rating);
+                renderExhibitorDetails(key);
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // EMPRESAS ADICIONALES
+        // ═══════════════════════════════════════════════════════════
+        
+        function addCompany() {
+            const name = document.getElementById('newCompanyName').value.trim();
+            const person = document.getElementById('newCompanyPerson').value.trim();
+            const position = document.getElementById('newCompanyPosition').value.trim();
+            const email = document.getElementById('newCompanyEmail').value.trim();
+            const phone = document.getElementById('newCompanyPhone').value.trim();
+            const comments = document.getElementById('newCompanyComments').value.trim();
+            
+            if (!name || !person) {
+                alert('⚠️ El nombre de empresa y persona son obligatorios');
+                return;
+            }
+            
+            appState.companies.push({
+                name, person, position, email, phone, comments
+            });
+            
+            document.getElementById('newCompanyName').value = '';
+            document.getElementById('newCompanyPerson').value = '';
+            document.getElementById('newCompanyPosition').value = '';
+            document.getElementById('newCompanyEmail').value = '';
+            document.getElementById('newCompanyPhone').value = '';
+            document.getElementById('newCompanyComments').value = '';
+            
+            saveToLocalStorage();
+            renderCompanies();
+        }
+        
+        function renderCompanies() {
+            let html = '';
+            
+            appState.companies.forEach((company, index) => {
+                const isEditing = company.isEditing || false;
+                
+                html += `
+                    <div class="company-card">
+                        <div class="company-header">
+                            <div class="company-name">${company.name}</div>
+                            <button class="delete-btn" onclick="deleteCompany(${index})">🗑️ Eliminar</button>
+                        </div>
+                        <p><strong>👤 Contacto:</strong> ${company.person}</p>
+                        ${company.position ? `<p><strong>💼 Cargo:</strong> ${company.position}</p>` : ''}
+                        ${company.email ? `<p><strong>📧 Email:</strong> ${company.email}</p>` : ''}
+                        ${company.phone ? `<p><strong>📱 Teléfono:</strong> ${company.phone}</p>` : ''}
+                        
+                        <div style="margin-top: 15px;">
+                            <strong style="color: #4a5568;">💬 Notas:</strong>
+                            ${!isEditing ? `
+                                <div style="margin-top: 8px; padding: 10px; background: #f7fafc; border-radius: 6px; min-height: 40px; color: #2d3748;">
+                                    ${company.comments || '<em style="color: #a0aec0;">Sin notas</em>'}
+                                </div>
+                                <button onclick="toggleEditCompanyNotes(${index}, true)" style="margin-top: 10px; background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                    ✏️ Editar Notas
+                                </button>
+                            ` : `
+                                <textarea id="editCompanyComments_${index}" style="width: 100%; min-height: 100px; padding: 10px; margin-top: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;">${company.comments || ''}</textarea>
+                                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                    <button onclick="saveCompanyNotes(${index})" style="flex: 1; background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                        💾 Guardar
+                                    </button>
+                                    <button onclick="toggleEditCompanyNotes(${index}, false)" style="flex: 1; background: #e2e8f0; color: #2d3748; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                        ✕ Cancelar
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('companiesList').innerHTML = html || '<p style="text-align: center; color: #718096;">No hay empresas adicionales</p>';
+        }
+        
+        function toggleEditCompanyNotes(index, isEditing) {
+            appState.companies[index].isEditing = isEditing;
+            renderCompanies();
+        }
+        
+        function saveCompanyNotes(index) {
+            const textarea = document.getElementById(`editCompanyComments_${index}`);
+            if (textarea) {
+                appState.companies[index].comments = textarea.value.trim();
+                appState.companies[index].isEditing = false;
+                saveToLocalStorage();
+                renderCompanies();
+                showSaveIndicator('saved', '✓ Notas guardadas');
+            }
+        }
+        
+        function deleteCompany(index) {
+            if (confirm('¿Eliminar esta empresa?')) {
+                appState.companies.splice(index, 1);
+                saveToLocalStorage();
+                renderCompanies();
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // REUNIONES
+        // ═══════════════════════════════════════════════════════════
+        
+        function createMeeting() {
+            const company = document.getElementById('meetingCompany').value.trim();
+            const person = document.getElementById('meetingPerson').value.trim();
+            const product = document.getElementById('meetingProduct').value.trim();
+            const time = document.getElementById('meetingTime').value.trim();
+            const stand = document.getElementById('meetingStand').value.trim();
+            
+            if (!company || !person || !product || !time) {
+                alert('⚠️ Empresa, Persona, Producto y Hora son obligatorios');
+                return;
+            }
+            
+            if (appState.meetings.length >= 100) {
+                alert('⚠️ Máximo 100 reuniones alcanzado');
+                return;
+            }
+            
+            appState.meetings.push({
+                company,
+                person,
+                product,
+                time,
+                stand,
+                comments: '',
+                id: Date.now()
+            });
+            
+            document.getElementById('meetingCompany').value = '';
+            document.getElementById('meetingPerson').value = '';
+            document.getElementById('meetingProduct').value = '';
+            document.getElementById('meetingTime').value = '';
+            document.getElementById('meetingStand').value = '';
+            
+            saveToLocalStorage();
+            renderMeetings();
+            renderExhibitors(); // Actualizar confirmados
+            updateStats();
+            
+            showSaveIndicator('saved', '✓ Reunión creada');
+        }
+        
+        function renderMeetings() {
+            let html = '';
+            
+            // Ordenar por hora
+            const sortedMeetings = [...appState.meetings].sort((a, b) => {
+                return a.time.localeCompare(b.time);
+            });
+            
+            if (sortedMeetings.length === 0) {
+                html = '<p style="text-align: center; color: #718096; padding: 20px;">No hay reuniones programadas</p>';
+            } else {
+                sortedMeetings.forEach((meeting, index) => {
+                    // Encontrar el índice real en el array original
+                    const realIndex = appState.meetings.findIndex(m => m.id === meeting.id);
+                    
+                    html += `
+                        <div class="meeting-card" onclick="openMeetingDetail(${realIndex})">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 700; font-size: 16px; color: #1a202c; margin-bottom: 5px;">
+                                        ${meeting.company}
+                                    </div>
+                                    <div style="color: #4a5568; font-size: 14px;">
+                                        👤 ${meeting.person}
+                                    </div>
+                                    <div style="color: #7c3aed; font-size: 13px; margin-top: 3px;">
+                                        📦 ${meeting.product}
+                                    </div>
+                                </div>
+                                <button class="delete-btn" onclick="event.stopPropagation(); deleteMeeting(${realIndex})">🗑️</button>
+                            </div>
+                            <div style="display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap;">
+                                <div style="color: #f59e0b; font-weight: 600; font-size: 16px;">
+                                    🕐 ${meeting.time}
+                                </div>
+                                ${meeting.stand ? `
+                                    <div style="color: #4a5568; font-size: 14px;">
+                                        📍 ${meeting.stand}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('meetingsList').innerHTML = html;
+        }
+        
+        function deleteMeeting(index) {
+            if (confirm('¿Eliminar esta reunión?')) {
+                appState.meetings.splice(index, 1);
+                saveToLocalStorage();
+                renderMeetings();
+                renderExhibitors(); // Actualizar confirmados
+                updateStats();
+                showSaveIndicator('saved', '✓ Reunión eliminada');
+            }
+        }
+        
+        let currentMeetingIndex = null;
+        
+        function openMeetingDetail(index) {
+            currentMeetingIndex = index;
+            const meeting = appState.meetings[index];
+            
+            document.body.insertAdjacentHTML('beforeend', `
+                <div id="meetingModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 20px; border-radius: 20px 20px 0 0;">
+                            <h2 style="color: white; margin: 0; font-size: 20px;">🤝 ${meeting.company}</h2>
+                        </div>
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #4a5568;">Persona:</strong>
+                                <div style="color: #1a202c; font-size: 15px; margin-top: 5px;">${meeting.person}</div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #4a5568;">Producto:</strong>
+                                <div style="color: #7c3aed; font-size: 15px; margin-top: 5px;">${meeting.product}</div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #4a5568;">Hora:</strong>
+                                <div style="color: #f59e0b; font-size: 18px; font-weight: 700; margin-top: 5px;">🕐 ${meeting.time}</div>
+                            </div>
+                            ${meeting.stand ? `
+                                <div style="margin-bottom: 15px;">
+                                    <strong style="color: #4a5568;">Stand:</strong>
+                                    <div style="color: #1a202c; font-size: 15px; margin-top: 5px;">📍 ${meeting.stand}</div>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="margin-top: 20px;">
+                                <label style="display: block; font-weight: 600; color: #2d3748; margin-bottom: 8px;">💬 Notas y Comentarios:</label>
+                                <textarea id="meetingComments" style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;">${meeting.comments || ''}</textarea>
+                            </div>
+                            
+                            <div style="margin-top: 20px;">
+                                <label style="display: block; font-weight: 600; color: #2d3748; margin-bottom: 8px;">📷 Fotos (máx 3):</label>
+                                <div id="meetingPhotosContainer"></div>
+                                <input type="file" id="meetingPhotoInput" accept="image/*" multiple style="display: none;" onchange="uploadMeetingPhotos(event, 'meeting_${index}')">
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button onclick="saveMeetingDetail()" style="flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer;">
+                                    💾 Guardar
+                                </button>
+                                <button onclick="closeMeetingModal()" style="flex: 1; background: #e2e8f0; color: #2d3748; border: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer;">
+                                    ✕ Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            renderMeetingPhotos(`meeting_${index}`);
+        }
+        
+        async function renderMeetingPhotos(key) {
+            const photos = await getPhotosFromDB(key) || [];
+            const container = document.getElementById('meetingPhotosContainer');
+            
+            if (!container) return;
+            
+            let html = '';
+            
+            photos.forEach((photo, index) => {
+                html += `
+                    <div style="position: relative; display: inline-block; margin: 5px;">
+                        <img src="${photo}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <button onclick="deletePhoto('${key}', ${index})" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">✕</button>
+                        <button onclick="downloadPhoto('${key}', ${index})" style="position: absolute; bottom: -8px; right: -8px; background: #3b82f6; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">💾</button>
+                    </div>
+                `;
+            });
+            
+            const photoCount = photos.length;
+            const maxPhotos = 3;
+            const canAddMore = photoCount < maxPhotos;
+            
+            html += `
+                <button onclick="document.getElementById('meetingPhotoInput').click()" 
+                        style="width: 100px; height: 100px; border: 2px dashed ${canAddMore ? '#cbd5e0' : '#e2e8f0'}; background: ${canAddMore ? '#f7fafc' : '#f1f5f9'}; border-radius: 8px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; cursor: ${canAddMore ? 'pointer' : 'not-allowed'}; margin: 5px; font-size: 12px; color: #4a5568;"
+                        ${canAddMore ? '' : 'disabled'}>
+                    <div style="font-size: 24px; margin-bottom: 5px;">📷</div>
+                    <div>${photoCount}/${maxPhotos}</div>
+                </button>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        async function uploadMeetingPhotos(event, key) {
+            const files = Array.from(event.target.files);
+            
+            if (files.length === 0) return;
+            
+            try {
+                const existingPhotos = await getPhotosFromDB(key) || [];
+                const remaining = 3 - existingPhotos.length;
+                
+                if (remaining <= 0) {
+                    alert('⚠️ Máximo 3 fotos por reunión');
+                    return;
+                }
+                
+                const filesToUpload = files.slice(0, remaining);
+                const compressedPhotos = [];
+                
+                for (const file of filesToUpload) {
+                    try {
+                        const compressed = await compressImage(file);
+                        compressedPhotos.push(compressed);
+                    } catch (error) {
+                        console.error('Error comprimiendo imagen:', error);
+                    }
+                }
+                
+                if (compressedPhotos.length > 0) {
+                    const allPhotos = [...existingPhotos, ...compressedPhotos];
+                    await savePhotoToDB(key, allPhotos);
+                    
+                    renderMeetingPhotos(key);
+                    showSaveIndicator('saved', `${compressedPhotos.length} foto(s) guardada(s)`);
+                }
+                
+                event.target.value = '';
+                
+            } catch (error) {
+                console.error('Error al subir fotos:', error);
+                showSaveIndicator('error', 'Error al guardar fotos');
+                alert('❌ Error al guardar fotos. Intenta de nuevo.');
+            }
+        }
+        
+        function saveMeetingDetail() {
+            if (currentMeetingIndex === null) return;
+            
+            const comments = document.getElementById('meetingComments').value.trim();
+            appState.meetings[currentMeetingIndex].comments = comments;
+            
+            saveToLocalStorage();
+            closeMeetingModal();
+            renderMeetings();
+            showSaveIndicator('saved', '✓ Reunión actualizada');
+        }
+        
+        function closeMeetingModal() {
+            const modal = document.getElementById('meetingModal');
+            if (modal) modal.remove();
+            currentMeetingIndex = null;
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // RUTA PLANIFICADA
+        // ═══════════════════════════════════════════════════════════
+        
+        function renderRoute() {
+            let html = '';
+            
+            // Agrupar TODOS los confirmados por hall (visitados y pendientes)
+            const hallsData = {};
+            exhibitorsData.confirmed.forEach((exhibitor, index) => {
+                const key = `confirmed_${index}`;
+                const hall = exhibitor.location.split(' Stand')[0];
+                const standNumber = exhibitor.location.split(' Stand ')[1];
+                
+                if (!hallsData[hall]) {
+                    hallsData[hall] = [];
+                }
+                
+                hallsData[hall].push({
+                    ...exhibitor,
+                    key,
+                    standNumber,
+                    visited: appState.visits[key],
+                    notInterested: appState.notInterested[key]
+                });
+            });
+            
+            // Ordenar por stand dentro de cada hall
+            Object.keys(hallsData).forEach(hall => {
+                hallsData[hall].sort((a, b) => {
+                    const standA = a.standNumber || '';
+                    const standB = b.standNumber || '';
+                    return standA.localeCompare(standB);
+                });
+            });
+            
+            // Renderizar ruta optimizada por hall
+            html += '<div class="route-section">';
+            html += '<h3>🗺️ Ruta Optimizada por Hall</h3>';
+            html += '<p style="color: #4a5568; font-size: 13px; margin-bottom: 15px;">Orden sugerido de visita en cada hall</p>';
+            
+            Object.keys(hallsData).sort().forEach(hall => {
+                const exhibitors = hallsData[hall];
+                const visited = exhibitors.filter(e => e.visited).length;
+                const total = exhibitors.length;
+                const pending = total - visited - exhibitors.filter(e => e.notInterested).length;
+                
+                html += `
+                    <h4 style="color: #667eea; margin: 20px 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${hall}</span>
+                        <span style="font-size: 12px; font-weight: normal; color: #718096;">
+                            ${visited}/${total} visitados
+                        </span>
+                    </h4>
+                `;
+                
+                exhibitors.forEach(exhibitor => {
+                    const details = appState.details[exhibitor.key] || {};
+                    
+                    let itemClass = 'route-item';
+                    let statusIcon = '☐';
+                    let borderColor = '#cbd5e0';
+                    
+                    if (exhibitor.visited) {
+                        statusIcon = '✓';
+                        borderColor = '#10b981';
+                        itemClass += ' visited';
+                    } else if (exhibitor.notInterested) {
+                        statusIcon = '✗';
+                        borderColor = '#ef4444';
+                    } else {
+                        borderColor = '#667eea';
+                    }
+                    
+                    let priorityBadge = '';
+                    if (exhibitor.priority === 'high') {
+                        priorityBadge = '<span style="background: #fecaca; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔴 ALTA</span>';
+                    } else if (exhibitor.priority === 'medium') {
+                        priorityBadge = '<span style="background: #fed7aa; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🟡 MEDIA</span>';
+                    } else {
+                        priorityBadge = '<span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔵 BAJA</span>';
+                    }
+                    
+                    html += `
+                        <div class="route-item" style="border-left-color: ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                                <strong style="flex: 1;">${statusIcon} ${exhibitor.name}</strong>
+                                ${priorityBadge}
+                            </div>
+                            <p style="color: #4a5568; font-size: 13px;">📍 ${exhibitor.location}</p>
+                            ${exhibitor.visited && details.visitTime ? `<p style="color: #4a5568; font-size: 12px;">🕐 Visitado: ${details.visitTime}</p>` : ''}
+                            ${exhibitor.visited && details.rating ? `<p style="color: #4a5568; font-size: 12px;">⭐ Valoración: ${details.rating}/5</p>` : ''}
+                        </div>
+                    `;
+                });
+            });
+            
+            html += '</div>';
+            
+            // Expositores pendientes (sin ubicación confirmada)
+            const pendingToVisit = [];
+            exhibitorsData.pending.forEach((exhibitor, index) => {
+                const key = `pending_${index}`;
+                if (!appState.notInterested[key]) {
+                    pendingToVisit.push({
+                        ...exhibitor,
+                        key,
+                        visited: appState.visits[key]
+                    });
+                }
+            });
+            
+            if (pendingToVisit.length > 0) {
+                const visitedCount = pendingToVisit.filter(e => e.visited).length;
+                
+                html += '<div class="route-section" style="margin-top: 30px;">';
+                html += `<h3 style="color: #f59e0b;">⏳ Expositores Pendientes de Ubicación (${visitedCount}/${pendingToVisit.length})</h3>`;
+                html += '<p style="color: #4a5568; font-size: 13px; margin-bottom: 15px;">Ubicaciones por confirmar</p>';
+                
+                // Ordenar por prioridad
+                pendingToVisit.sort((a, b) => {
+                    const priorityOrder = { high: 0, medium: 1, low: 2 };
+                    return priorityOrder[a.priority] - priorityOrder[b.priority];
+                });
+                
+                pendingToVisit.forEach(exhibitor => {
+                    const details = appState.details[exhibitor.key] || {};
+                    let statusIcon = exhibitor.visited ? '✓' : '☐';
+                    let borderColor = exhibitor.visited ? '#10b981' : '#f59e0b';
+                    
+                    let priorityBadge = '';
+                    if (exhibitor.priority === 'high') {
+                        priorityBadge = '<span style="background: #fecaca; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔴 ALTA</span>';
+                    } else if (exhibitor.priority === 'medium') {
+                        priorityBadge = '<span style="background: #fed7aa; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🟡 MEDIA</span>';
+                    } else {
+                        priorityBadge = '<span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">🔵 BAJA</span>';
+                    }
+                    
+                    html += `
+                        <div class="route-item" style="border-left-color: ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                                <strong style="flex: 1;">${statusIcon} ${exhibitor.name}</strong>
+                                ${priorityBadge}
+                            </div>
+                            <p style="color: #4a5568; font-size: 13px;">⏳ Ubicación por confirmar</p>
+                            ${exhibitor.visited && details.visitTime ? `<p style="color: #4a5568; font-size: 12px;">🕐 Visitado: ${details.visitTime}</p>` : ''}
+                            ${exhibitor.visited && details.rating ? `<p style="color: #4a5568; font-size: 12px;">⭐ Valoración: ${details.rating}/5</p>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            document.getElementById('routeContent').innerHTML = html;
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // EXPORTACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        async function exportJSON() {
+            try {
+                // Recopilar todas las fotos de expositores de IndexedDB
+                const allPhotos = {};
+                for (const key in appState.details) {
+                    const photos = await getPhotosFromDB(key);
+                    if (photos && photos.length > 0) {
+                        allPhotos[key] = photos;
+                    }
+                }
+                
+                // NUEVO: Recopilar fotos de REUNIONES
+                const meetingPhotos = {};
+                for (let i = 0; i < appState.meetings.length; i++) {
+                    const meetingKey = `meeting_${i}`;
+                    const photos = await getPhotosFromDB(meetingKey);
+                    if (photos && photos.length > 0) {
+                        meetingPhotos[meetingKey] = photos;
+                    }
+                }
+                
+                const exportData = {
+                    version: '3.0',
+                    exportDate: new Date().toISOString(),
+                    appState: appState,
+                    photos: allPhotos,
+                    meetingPhotos: meetingPhotos,  // NUEVO: Fotos de reuniones
+                    exhibitorsData: exhibitorsData
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                
+                // Intentar Web Share API primero (mejor para iOS)
+                if (navigator.share) {
+                    try {
+                        const file = new File([blob], `backup_automechanika_${new Date().toISOString().split('T')[0]}.json`, { type: 'application/json' });
+                        await navigator.share({
+                            files: [file],
+                            title: 'Backup Automechanika',
+                            text: 'Backup completo con fotos de reuniones'
+                        });
+                        alert('✅ Backup exportado con fotos de reuniones incluidas');
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                    }
+                }
+                
+                // Fallback: descarga directa
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_automechanika_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert('✅ Backup exportado con fotos de reuniones incluidas');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al exportar: ' + error.message);
+            }
+        }
+        
+        // NUEVA FUNCIÓN: Descargar fotos de reuniones una por una
+        async function downloadMeetingPhotos() {
+            try {
+                if (appState.meetings.length === 0) {
+                    alert('⚠️ No hay reuniones con fotos para descargar');
+                    return;
+                }
+                
+                let totalPhotos = 0;
+                let photosData = [];
+                
+                // Recopilar todas las fotos de reuniones
+                for (let i = 0; i < appState.meetings.length; i++) {
+                    const meeting = appState.meetings[i];
+                    const meetingKey = `meeting_${i}`;
+                    const photos = await getPhotosFromDB(meetingKey) || [];
+                    
+                    if (photos.length > 0) {
+                        photos.forEach((photo, photoIndex) => {
+                            photosData.push({
+                                meeting: meeting,
+                                meetingIndex: i,
+                                photoIndex: photoIndex,
+                                photoData: photo
+                            });
+                            totalPhotos++;
+                        });
+                    }
+                }
+                
+                if (totalPhotos === 0) {
+                    alert('⚠️ No hay fotos en las reuniones');
+                    return;
+                }
+                
+                alert(`📷 Se encontraron ${totalPhotos} fotos en ${appState.meetings.length} reuniones.\n\nSe abrirá el menú para compartir cada foto.`);
+                
+                // Descargar cada foto
+                for (let i = 0; i < photosData.length; i++) {
+                    const item = photosData[i];
+                    const meeting = item.meeting;
+                    const cleanName = meeting.company.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    const fileName = `reunion_${cleanName}_foto${item.photoIndex + 1}.jpg`;
+                    
+                    // Convertir base64 a blob
+                    const base64Data = item.photoData.split(',')[1];
+                    const byteCharacters = atob(base64Data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let j = 0; j < byteCharacters.length; j++) {
+                        byteNumbers[j] = byteCharacters.charCodeAt(j);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                    
+                    // Intentar compartir (mejor para iPhone)
+                    if (navigator.share && navigator.canShare) {
+                        try {
+                            const file = new File([blob], fileName, { type: 'image/jpeg' });
+                            if (navigator.canShare({ files: [file] })) {
+                                await navigator.share({
+                                    files: [file],
+                                    title: `Foto ${i + 1} de ${totalPhotos}`,
+                                    text: `Reunión: ${meeting.company} - ${meeting.person}`
+                                });
+                                continue;
+                            }
+                        } catch (err) {
+                            if (err.name === 'AbortError') continue;
+                        }
+                    }
+                    
+                    // Fallback: descarga directa
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    // Esperar un poco entre descargas
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                alert(`✅ ${totalPhotos} fotos procesadas`);
+                
+            } catch (error) {
+                console.error('Error descargando fotos:', error);
+                alert('❌ Error al descargar fotos: ' + error.message);
+            }
+        }
+        
+        // NUEVA FUNCIÓN: Descargar todas las fotos en un ZIP
+        async function downloadAllPhotosZIP() {
+            try {
+                if (appState.meetings.length === 0) {
+                    alert('⚠️ No hay reuniones con fotos para descargar');
+                    return;
+                }
+                
+                if (typeof JSZip === 'undefined') {
+                    alert('❌ Error: Librería JSZip no cargada. Recarga la página.');
+                    return;
+                }
+                
+                alert('📦 Preparando ZIP con todas las fotos...\nEsto puede tardar unos segundos.');
+                
+                const zip = new JSZip();
+                let totalPhotos = 0;
+                let indiceContent = 'ÍNDICE DE FOTOS - AUTOMECHANIKA SHANGHAI 2025\n';
+                indiceContent += '=' .repeat(60) + '\n\n';
+                
+                // Recopilar todas las fotos de reuniones
+                for (let i = 0; i < appState.meetings.length; i++) {
+                    const meeting = appState.meetings[i];
+                    const meetingKey = `meeting_${i}`;
+                    const photos = await getPhotosFromDB(meetingKey) || [];
+                    
+                    if (photos.length > 0) {
+                        const cleanName = meeting.company.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                        
+                        indiceContent += `📁 ${meeting.company}\n`;
+                        indiceContent += `   Persona: ${meeting.person}\n`;
+                        indiceContent += `   Producto: ${meeting.product}\n`;
+                        if (meeting.stand) indiceContent += `   Stand: ${meeting.stand}\n`;
+                        indiceContent += `   Hora: ${meeting.time}\n`;
+                        indiceContent += `   Fotos:\n`;
+                        
+                        for (let j = 0; j < photos.length; j++) {
+                            const fileName = `reunion_${cleanName}_foto${j + 1}.jpg`;
+                            
+                            // Convertir base64 a blob
+                            const base64Data = photos[j].split(',')[1];
+                            
+                            // Añadir foto al ZIP
+                            zip.file(fileName, base64Data, {base64: true});
+                            
+                            indiceContent += `      - ${fileName}\n`;
+                            totalPhotos++;
+                        }
+                        
+                        indiceContent += '\n';
+                    }
+                }
+                
+                if (totalPhotos === 0) {
+                    alert('⚠️ No hay fotos en las reuniones');
+                    return;
+                }
+                
+                // Contar reuniones que tienen fotos
+                let reunionesConFotos = 0;
+                for (let i = 0; i < appState.meetings.length; i++) {
+                    const photos = await getPhotosFromDB(`meeting_${i}`) || [];
+                    if (photos.length > 0) reunionesConFotos++;
+                }
+                
+                // Añadir archivo índice
+                indiceContent += '='.repeat(60) + '\n';
+                indiceContent += `Total de fotos: ${totalPhotos}\n`;
+                indiceContent += `Total de reuniones con fotos: ${reunionesConFotos}\n`;
+                indiceContent += `Generado: ${new Date().toLocaleString('es-ES')}\n`;
+                
+                zip.file('INDICE.txt', indiceContent);
+                
+                // Generar ZIP
+                const zipBlob = await zip.generateAsync({
+                    type: 'blob',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                });
+                
+                const fileName = `fotos_reuniones_automechanika_${new Date().toISOString().split('T')[0]}.zip`;
+                
+                // Intentar Web Share API primero (mejor para iOS)
+                if (navigator.share && navigator.canShare) {
+                    try {
+                        const file = new File([zipBlob], fileName, { type: 'application/zip' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Fotos Reuniones Automechanika',
+                                text: `ZIP con ${totalPhotos} fotos de ${appState.meetings.length} reuniones`
+                            });
+                            alert(`✅ ZIP con ${totalPhotos} fotos compartido`);
+                            return;
+                        }
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                        console.log('Share falló, intentando descarga directa:', err);
+                    }
+                }
+                
+                // Fallback: descarga directa
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert(`✅ ZIP descargado con ${totalPhotos} fotos\n\nIncluye archivo INDICE.txt con mapeo de fotos → reuniones`);
+                
+            } catch (error) {
+                console.error('Error creando ZIP:', error);
+                alert('❌ Error al crear ZIP: ' + error.message);
+            }
+        }
+        
+        async function exportDailyReport() {
+            try {
+                const date = new Date().toLocaleDateString('es-ES');
+                
+                let html = `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px; }
+                        h1 { color: #2d3748; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+                        h2 { color: #667eea; margin-top: 30px; }
+                        .company { margin: 20px 0; padding: 15px; border-left: 4px solid #10b981; background: #f7fafc; }
+                        .company h3 { margin: 0 0 10px 0; color: #1a202c; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+                        td:first-child { font-weight: bold; width: 150px; color: #4a5568; }
+                        .photo { max-width: 300px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📝 Informe Diario - Automechanika Shanghai 2025</h1>
+                    <p><strong>Empresa:</strong> Lizarte</p>
+                    <p><strong>Fecha:</strong> ${date}</p>
+                    <p><strong>Generado:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                `;
+                
+                // Expositores visitados hoy
+                const visitedToday = [];
+                
+                for (let i = 0; i < exhibitorsData.confirmed.length; i++) {
+                    const key = `confirmed_${i}`;
+                    if (appState.visits[key]) {
+                        const exhibitor = exhibitorsData.confirmed[i];
+                        const details = appState.details[key] || {};
+                        const photos = await getPhotosFromDB(key) || [];
+                        visitedToday.push({ exhibitor, details, photos, key });
+                    }
+                }
+                
+                for (let i = 0; i < exhibitorsData.pending.length; i++) {
+                    const key = `pending_${i}`;
+                    if (appState.visits[key]) {
+                        const exhibitor = exhibitorsData.pending[i];
+                        const details = appState.details[key] || {};
+                        const photos = await getPhotosFromDB(key) || [];
+                        visitedToday.push({ exhibitor, details, photos, key });
+                    }
+                }
+                
+                if (visitedToday.length > 0) {
+                    html += `<h2>✅ Expositores Visitados (${visitedToday.length})</h2>`;
+                    
+                    visitedToday.forEach(({ exhibitor, details, photos }) => {
+                        html += `
+                            <div class="company">
+                                <h3>${exhibitor.name}</h3>
+                                <table>
+                                    ${exhibitor.location ? `<tr><td>📍 Ubicación</td><td>${exhibitor.location}</td></tr>` : ''}
+                                    ${exhibitor.priority ? `<tr><td>⚡ Prioridad</td><td>${exhibitor.priority === 'high' ? '🔴 Alta' : exhibitor.priority === 'medium' ? '🟡 Media' : '🔵 Baja'}</td></tr>` : ''}
+                                    ${details.rating ? `<tr><td>⭐ Valoración</td><td>${'⭐'.repeat(details.rating)} (${details.rating}/5)</td></tr>` : ''}
+                                    ${details.products ? `<tr><td>🏭 Productos</td><td>${details.products}</td></tr>` : ''}
+                                    ${details.contactName ? `<tr><td>👤 Contacto</td><td>${details.contactName}</td></tr>` : ''}
+                                    ${details.contactPosition ? `<tr><td>💼 Cargo</td><td>${details.contactPosition}</td></tr>` : ''}
+                                    ${details.contactEmail ? `<tr><td>📧 Email</td><td>${details.contactEmail}</td></tr>` : ''}
+                                    ${details.contactPhone ? `<tr><td>📱 Teléfono</td><td>${details.contactPhone}</td></tr>` : ''}
+                                    ${details.visitTime ? `<tr><td>🕐 Hora visita</td><td>${details.visitTime}</td></tr>` : ''}
+                                </table>
+                                ${details.comments ? `<p><strong>💬 Notas:</strong> ${details.comments}</p>` : ''}
+                                ${photos.length > 0 ? photos.map((photo, i) => `<img src="${photo}" class="photo" alt="Foto ${i+1}">`).join('') : ''}
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Empresas adicionales
+                if (appState.companies.length > 0) {
+                    html += `<h2>➕ Empresas Adicionales (${appState.companies.length})</h2>`;
+                    appState.companies.forEach(company => {
+                        html += `
+                            <div class="company">
+                                <h3>${company.name}</h3>
+                                <table>
+                                    <tr><td>👤 Contacto</td><td>${company.person}</td></tr>
+                                    ${company.position ? `<tr><td>💼 Cargo</td><td>${company.position}</td></tr>` : ''}
+                                    ${company.email ? `<tr><td>📧 Email</td><td>${company.email}</td></tr>` : ''}
+                                    ${company.phone ? `<tr><td>📱 Teléfono</td><td>${company.phone}</td></tr>` : ''}
+                                </table>
+                                ${company.comments ? `<p><strong>💬 Notas:</strong> ${company.comments}</p>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+                
+                html += `
+                    <hr style="margin-top: 40px; border: none; border-top: 2px solid #e2e8f0;">
+                    <p style="text-align: center; color: #718096; font-size: 12px;">
+                        Generado: ${new Date().toLocaleString('es-ES')}<br>
+                        Automechanika Shanghai 2025 - Lizarte
+                    </p>
+                </body>
+                </html>`;
+                
+                const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+                const fileName = `informe_diario_${new Date().toISOString().split('T')[0]}.doc`;
+                
+                // Compartir si es posible
+                if (navigator.share) {
+                    try {
+                        const file = new File([blob], fileName, { type: 'application/msword' });
+                        await navigator.share({
+                            files: [file],
+                            title: 'Informe Diario Automechanika',
+                            text: `Informe del ${date} con fotos incluidas`
+                        });
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                    }
+                }
+                
+                // Descarga fallback
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                alert('✅ Informe profesional con fotos generado');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al generar informe: ' + error.message);
+            }
+        }
+        
+        async function exportCompleteWord() {
+            alert('📑 Generando informe completo con TODOS los stands...');
+            
+            const date = new Date().toLocaleDateString('es-ES');
+            const totalVisited = Object.keys(appState.visits).filter(k => appState.visits[k]).length;
+            const totalExhibitors = exhibitorsData.confirmed.length + exhibitorsData.pending.length;
+            
+            let content = `INFORME COMPLETO - AUTOMECHANIKA SHANGHAI 2025\n`;
+            content += `Lizarte\n`;
+            content += `Fecha: ${date}\n\n`;
+            content += `════════════════════════════════════════\n\n`;
+            
+            content += `RESUMEN EJECUTIVO\n\n`;
+            content += `Total de expositores: ${totalExhibitors}\n`;
+            content += `Expositores visitados: ${totalVisited}\n`;
+            content += `Expositores pendientes: ${totalExhibitors - totalVisited}\n`;
+            content += `Porcentaje completado: ${Math.round((totalVisited / totalExhibitors) * 100)}%\n`;
+            content += `Empresas adicionales: ${appState.companies.length}\n\n`;
+            content += `════════════════════════════════════════\n\n`;
+            
+            // AGRUPAR CONFIRMADOS POR HALL
+            const hallsData = {};
+            exhibitorsData.confirmed.forEach((exhibitor, index) => {
+                const key = `confirmed_${index}`;
+                const hall = exhibitor.location.split(' Stand')[0];
+                const standNumber = exhibitor.location.split(' Stand ')[1];
+                
+                if (!hallsData[hall]) hallsData[hall] = [];
+                
+                hallsData[hall].push({
+                    ...exhibitor,
+                    key,
+                    standNumber,
+                    index
+                });
+            });
+            
+            // Ordenar por stand dentro de cada hall
+            Object.keys(hallsData).forEach(hall => {
+                hallsData[hall].sort((a, b) => {
+                    const standA = a.standNumber || '';
+                    const standB = b.standNumber || '';
+                    return standA.localeCompare(standB);
+                });
+            });
+            
+            content += `RUTA CONFIRMADA - TODOS LOS EXPOSITORES (43)\n`;
+            content += `Organizados por Hall y Stand (orden óptimo de visita)\n\n`;
+            
+            // Renderizar por hall
+            for (const hall of Object.keys(hallsData).sort()) {
+                const exhibitors = hallsData[hall];
+                const visited = exhibitors.filter(e => appState.visits[e.key]).length;
+                
+                content += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                content += `${hall} - ${visited}/${exhibitors.length} visitados\n`;
+                content += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+                
+                for (const exhibitor of exhibitors) {
+                    const isVisited = appState.visits[exhibitor.key];
+                    const isNotInterested = appState.notInterested[exhibitor.key];
+                    const details = appState.details[exhibitor.key] || {};
+                    const photos = await getPhotosFromDB(exhibitor.key) || [];
+                    
+                    // Indicador de estado
+                    let status = '';
+                    if (isVisited) status = '✓ VISITADO';
+                    else if (isNotInterested) status = '✗ NO INTERESA';
+                    else status = '☐ PENDIENTE';
+                    
+                    content += `${exhibitor.name} [${status}]\n`;
+                    content += `${'-'.repeat(exhibitor.name.length + status.length + 3)}\n`;
+                    content += `Ubicación: ${exhibitor.location}\n`;
+                    content += `Prioridad: ${exhibitor.priority === 'high' ? '🔴 ALTA' : exhibitor.priority === 'medium' ? '🟡 MEDIA' : '🔵 BAJA'}\n`;
+                    
+                    // Si tiene detalles, mostrarlos
+                    if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)} (${details.rating}/5)\n`;
+                    if (details.products) content += `Productos de interés: ${details.products}\n`;
+                    if (details.contactName) {
+                        content += `\nCONTACTO:\n`;
+                        content += `  Nombre: ${details.contactName}\n`;
+                        if (details.contactPosition) content += `  Cargo: ${details.contactPosition}\n`;
+                        if (details.contactEmail) content += `  Email: ${details.contactEmail}\n`;
+                        if (details.contactPhone) content += `  Teléfono: ${details.contactPhone}\n`;
+                    }
+                    if (details.visitTime) content += `Hora de visita: ${details.visitTime}\n`;
+                    if (details.comments) content += `\nComentarios:\n${details.comments}\n`;
+                    if (photos.length > 0) content += `Fotos adjuntas: ${photos.length}\n`;
+                    
+                    content += `\n`;
+                }
+            }
+            
+            content += `\n════════════════════════════════════════\n\n`;
+            content += `RUTA PENDIENTE - TODOS LOS EXPOSITORES (42)\n`;
+            content += `Ordenados por prioridad\n\n`;
+            
+            // Ordenar pendientes por prioridad
+            const pendingSorted = [...exhibitorsData.pending].sort((a, b) => {
+                const priorityOrder = { high: 0, medium: 1, low: 2 };
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            });
+            
+            for (const exhibitor of pendingSorted) {
+                const key = `pending_${exhibitorsData.pending.indexOf(exhibitor)}`;
+                const isVisited = appState.visits[key];
+                const isNotInterested = appState.notInterested[key];
+                const details = appState.details[key] || {};
+                const photos = await getPhotosFromDB(key) || [];
+                
+                let status = '';
+                if (isVisited) status = '✓ VISITADO';
+                else if (isNotInterested) status = '✗ NO INTERESA';
+                else status = '☐ PENDIENTE';
+                
+                content += `${exhibitor.name} [${status}]\n`;
+                content += `${'-'.repeat(exhibitor.name.length + status.length + 3)}\n`;
+                content += `Prioridad: ${exhibitor.priority === 'high' ? '🔴 ALTA' : exhibitor.priority === 'medium' ? '🟡 MEDIA' : '🔵 BAJA'}\n`;
+                content += `Ubicación: ⏳ Por confirmar\n`;
+                
+                if (details.rating) content += `Valoración: ${'⭐'.repeat(details.rating)} (${details.rating}/5)\n`;
+                if (details.products) content += `Productos de interés: ${details.products}\n`;
+                if (details.contactName) {
+                    content += `\nCONTACTO:\n`;
+                    content += `  Nombre: ${details.contactName}\n`;
+                    if (details.contactPosition) content += `  Cargo: ${details.contactPosition}\n`;
+                    if (details.contactEmail) content += `  Email: ${details.contactEmail}\n`;
+                    if (details.contactPhone) content += `  Teléfono: ${details.contactPhone}\n`;
+                }
+                if (details.visitTime) content += `Hora de visita: ${details.visitTime}\n`;
+                if (details.comments) content += `\nComentarios:\n${details.comments}\n`;
+                if (photos.length > 0) content += `Fotos adjuntas: ${photos.length}\n`;
+                
+                content += `\n`;
+            }
+            
+            if (appState.companies.length > 0) {
+                content += `\n════════════════════════════════════════\n\n`;
+                content += `EMPRESAS ADICIONALES A VISITAR\n\n`;
+                
+                appState.companies.forEach(company => {
+                    content += `\n${company.name}\n`;
+                    content += `${'-'.repeat(company.name.length)}\n`;
+                    content += `Contacto: ${company.person}\n`;
+                    if (company.position) content += `Cargo: ${company.position}\n`;
+                    if (company.email) content += `Email: ${company.email}\n`;
+                    if (company.phone) content += `Teléfono: ${company.phone}\n`;
+                    if (company.comments) content += `Notas: ${company.comments}\n`;
+                    content += `\n`;
+                });
+            }
+            
+            if (appState.meetings.length > 0) {
+                content += `\n════════════════════════════════════════\n\n`;
+                content += `🤝 REUNIONES PROGRAMADAS (${appState.meetings.length})\n`;
+                content += `Ordenadas por hora\n\n`;
+                
+                // Ordenar reuniones por hora
+                const sortedMeetings = [...appState.meetings].sort((a, b) => a.time.localeCompare(b.time));
+                
+                for (let i = 0; i < sortedMeetings.length; i++) {
+                    const meeting = sortedMeetings[i];
+                    const realIndex = appState.meetings.findIndex(m => m.id === meeting.id);
+                    const photos = await getPhotosFromDB(`meeting_${realIndex}`) || [];
+                    
+                    content += `\n🤝 ${meeting.company}\n`;
+                    content += `${'-'.repeat(meeting.company.length + 3)}\n`;
+                    content += `Persona: ${meeting.person}\n`;
+                    content += `Producto: ${meeting.product}\n`;
+                    content += `Hora: 🕐 ${meeting.time}\n`;
+                    if (meeting.stand) content += `Stand: ${meeting.stand}\n`;
+                    if (meeting.comments) content += `\nNotas:\n${meeting.comments}\n`;
+                    if (photos.length > 0) content += `Fotos adjuntas: ${photos.length}\n`;
+                    content += `\n`;
+                }
+            }
+            
+            content += `\n════════════════════════════════════════\n`;
+            content += `Fin del informe\n`;
+            content += `Generado: ${new Date().toLocaleString('es-ES')}\n`;
+            
+            // Guardar contenido globalmente
+            window.lastGeneratedReport = content;
+            
+            // Intentar Web Share API primero (mejor para iOS)
+            if (navigator.share) {
+                try {
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const file = new File([blob], `informe_automechanika_${new Date().toISOString().split('T')[0]}.txt`, { type: 'text/plain' });
+                    
+                    await navigator.share({
+                        files: [file],
+                        title: 'Informe Completo Automechanika',
+                        text: 'Informe completo de visitas'
+                    });
+                    
+                    alert('✅ Informe compartido');
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    console.log('Share API falló:', err);
+                }
+            }
+            
+            // Fallback: descarga
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `informe_automechanika_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            
+            alert('✅ Informe generado. Si no puedes abrirlo, usa el botón "📋 Copiar"');
+        }
+        
+        // Copiar informe al portapapeles
+        async function copyReportToClipboard() {
+            try {
+                showSaveIndicator('saving', 'Generando informe...');
+                
+                if (!window.lastGeneratedReport) {
+                    await exportCompleteWord();
+                }
+                
+                await navigator.clipboard.writeText(window.lastGeneratedReport);
+                
+                showSaveIndicator('saved', '✓ Copiado!');
+                alert('✅ Informe copiado!\n\n1. Abre OneNote\n2. Crear página nueva\n3. Mantener presionado y "Pegar"');
+            } catch (error) {
+                console.error('Error:', error);
+                showReportInModal();
+            }
+        }
+        
+        // Mostrar informe en modal
+        function showReportInModal() {
+            if (!window.lastGeneratedReport) {
+                exportCompleteWord();
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.9); z-index: 10000;
+                display: flex; flex-direction: column; padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                    <h2 style="color: white; margin: 0;">📄 Informe</h2>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px;">
+                        ✕ Cerrar
+                    </button>
+                </div>
+                <textarea readonly style="flex: 1; width: 100%; padding: 15px; font-family: monospace; font-size: 13px; border-radius: 8px;">${window.lastGeneratedReport}</textarea>
+                <button onclick="navigator.clipboard.writeText(window.lastGeneratedReport).then(() => alert('✅ Copiado')).catch(() => alert('❌ Error'))" 
+                        style="margin-top: 15px; background: #10b981; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                    📋 Copiar Todo
+                </button>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Importación
+        async function importFromJSON() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('⚠️ Selecciona un archivo JSON');
+                return;
+            }
+            
+            if (!confirm('⚠️ Esto sobrescribirá todos los datos. ¿Continuar?')) {
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    appState = imported.appState;
+                    
+                    // Importar fotos a IndexedDB si existen
+                    if (imported.photos) {
+                        for (const key in imported.photos) {
+                            await savePhotoToDB(key, imported.photos[key]);
+                        }
+                        console.log('✅ Fotos importadas a IndexedDB');
+                    }
+                    
+                    saveToLocalStorage();
+                    renderExhibitors();
+                    renderCompanies();
+                    renderRoute();
+                    updateStats();
+                    alert('✅ Datos importados correctamente');
+                    switchTab('overview');
+                } catch (error) {
+                    alert('❌ Error: archivo no válido');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════════════════════
+        
+        async function init() {
+            try {
+                await initPhotoDB();
+                loadFromLocalStorage();
+                await migrateOldPhotos();
+                renderExhibitors();
+                renderMeetings();
+                renderCompanies();
+                updateStats();
+                startAutoBackup();
+                
+                console.log('✅ App inicializada');
+                console.log(`📊 Total expositores: ${exhibitorsData.confirmed.length + exhibitorsData.pending.length}`);
+                console.log(`🤝 Total reuniones: ${appState.meetings.length}`);
+                console.log(`📷 Límite por stand: ${MAX_PHOTOS_PER_STAND} fotos`);
+                console.log(`💾 Almacenamiento: ${STORAGE_LIMIT_MB}MB`);
+            } catch (error) {
+                console.error('❌ Error en inicialización:', error);
+                alert('⚠️ Error al inicializar. Por favor, recarga la página.');
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
